@@ -1,12 +1,11 @@
+from .specs import SPEC_DICT
+
 from ..best_reponses import BR_DICT
 from ..costs import COST_DICT
 from ..losses import LOSS_DICT
 from ..models import MODEL_DICT
 from ..utilities import UTILITY_DICT
 
-SPEC_DICT = {
-    #"<recipe_name>": {"model": <model_name>, "best_response": <best_response_name>, "cost": <cost_name>, "utility": <utility_name>}
-}
 
 def _build_model_from_spec(model_spec, init_args):
     # A model might not require a cost or a utility. 
