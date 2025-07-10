@@ -14,7 +14,7 @@ from .tools.utils import RESULTS_DIR
 
 def _create_arg_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--arg_file", help="Optional: Specify the json file that args can be read from", default=None)
+    parser.add_argument("--arg_file", help="(Optional) Specify the json file that args can be read from", default=None)
     parser.add_argument("--dirname", help="The directory where the experiment results will be written to", default=f"{datetime.datetime.now():%Y-%m-%d_%H_%M}")
     parser.add_argument("--datasets", help="Comma separated list of datasets experiments are to be run on", nargs='+', required=True)
     parser.add_argument("--specs", help="Comma separated list of model specs experiments are to be run on", nargs='*', default=None)
@@ -32,6 +32,7 @@ def _create_arg_parser():
     parser.add_argument("--test", help="Include to perform model evaluation", action='store_true')
     parser.add_argument("--store", help="Include to store results from run", action='store_true')
     parser.add_argument("--verbose", help="Verbose mode", action='store_true')
+    parser.add_argument("--args", help="(Optional) Dict formatted string passing arguments to specified component objects. Key values: [best response, cost, dataset, loss, model, utility]", type=json.loads, default={})
 
     return parser.parse_args()
 
@@ -66,5 +67,5 @@ if __name__ == "__main__":
     _save_args(args)
     
     run_experiments(data_files=args.datasets, model_spec_names=args.specs, best_response_name=args.best_response, cost_name=args.cost, loss_name=args.loss,\
-                     model_name=args.model, utility_name=args.utility, seed_val=args.seed, lr=args.lr, batch_size=args.batch, epochs=args.epochs,\
+                     model_name=args.model, utility_name=args.utility, args=args.args, seed_val=args.seed, lr=args.lr, batch_size=args.batch, epochs=args.epochs,\
                         exp_result_dir=args.dirname, hist_result_dir=args.hist_result_dirname, train=args.train, test=args.test, store=args.store, verbose=args.verbose)

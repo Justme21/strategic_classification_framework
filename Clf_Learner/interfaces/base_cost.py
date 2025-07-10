@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from torch import Tensor
 
 class BaseCost(ABC):
     @abstractmethod
@@ -6,5 +7,5 @@ class BaseCost(ABC):
         pass
 
     @abstractmethod
-    def get_cost(self, x, y):
+    def __call__(self, X:Tensor, y:Tensor) -> Tensor:
         pass

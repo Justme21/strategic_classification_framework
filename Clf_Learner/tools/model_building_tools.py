@@ -7,7 +7,7 @@ from ..models import MODEL_DICT
 from ..utilities import UTILITY_DICT
 
 
-def _build_model_from_spec(model_spec, init_args):
+def _build_model_from_spec(model_spec, init_args, comp_args):
     # A model might not require a cost or a utility. 
     # By assumption ever model should require a best response
     cost = COST_DICT.get(model_spec['cost'])
@@ -17,17 +17,17 @@ def _build_model_from_spec(model_spec, init_args):
     model = MODEL_DICT[model_spec['model']]
 
     if cost is not None:
-        cost = cost(**init_args)
+        cost = cost(**init_args, **comp_args.get('cost', {}))
     if utility is not None:
-        utility = utility(**init_args)
-    best_response = best_response(cost=cost, utility=utility)
-    loss = loss(**init_args)
-    model = model(best_response=best_response, loss=loss, **init_args)
+        utility = utility(**init_args, **comp_args.get('utility', {}))
+    best_response = best_response(cost=cost, utility=utility, **init_args, **comp_args.get('best_response',{}))
+    loss = loss(**init_args, **comp_args.get('loss', {}))
+    model = model(best_response=best_response, loss=loss, **init_args, **comp_args.get('model', {}))
 
     return model
 
-def get_model(model_spec, init_args={}):
-    model = _build_model_from_spec(model_spec, init_args)
+def get_model(model_spec, init_args={}, comp_args={}):
+    model = _build_model_from_spec(model_spec, init_args, comp_args)
 
     return model
 

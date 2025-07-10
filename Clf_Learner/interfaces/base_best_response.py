@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from torch import Tensor
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -12,5 +13,5 @@ class BaseBestResponse(ABC):
         pass
 
     @abstractmethod
-    def get_best_response(self, X, model:'BaseModel'):
+    def __call__(self, X:Tensor, model:'BaseModel'):
         pass

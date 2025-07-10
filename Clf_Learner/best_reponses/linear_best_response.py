@@ -1,16 +1,13 @@
 import torch
 
-from ..interfaces.base_best_response import BaseBestResponse
+from ..interfaces import BaseBestResponse
 
 class LinearBestResponse(BaseBestResponse):
     """The best response to a Linear Model has a closed form solution that can be evaluated exactly"""
-    def __init__(self, utility, cost):
-        self.cost = cost
-        self.utility = utility
+    def __init__(self, utility, cost, radius=2, **kwargs):
+        self.radius = radius # The degree to which an input can be strategically perturbed
 
-        self.radius = 2 # The degree to which an input can be strategically perturbed
-
-    def get_best_response(self, X, model):
+    def __call__(self, X, model):
         W = model.get_params()
 
         # Compute magnitude and direction of movement orthogonal to decision boundary

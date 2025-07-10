@@ -10,12 +10,12 @@ def _regularization_loss(model):
 
 def _hinge_loss(model:BaseModel, X, y):
     #Smart Strategic SVM version of the hinge loss
-    W = model.get_params()
-
-    acc_term = y*model.forward(model.best_response.get_best_response(X, model))
+    acc_term = y*model.forward(model.best_response(X, model))
     return torch.mean(RELU(1-acc_term))
 
 class NaiveStrategicSVMHingeLoss(BaseLoss):
+    # As defined in Generalised Strategic Classification
+    # https://github.com/SagiLevanon1/GSC/blob/main/generalization.ipynb
 
     def __init__(self, reg_weight=0, **kwargs):
         self.reg_weight = reg_weight

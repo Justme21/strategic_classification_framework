@@ -1,4 +1,9 @@
+from ..interfaces import BaseUtility
 
-UTILITY_DICT = {
-    
+from .linear_utility import LinearUtility
+from .strategic_utility import StrategicUtility
+
+UTILITY_DICT: dict[str, type[BaseUtility]]= {
+    "linear": LinearUtility,
+    "strategic": StrategicUtility,
 }

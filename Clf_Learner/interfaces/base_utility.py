@@ -1,4 +1,9 @@
 from abc import ABC, abstractmethod
+from torch import Tensor
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .base_model import BaseModel
 
 class BaseUtility(ABC):
     @abstractmethod
@@ -6,5 +11,5 @@ class BaseUtility(ABC):
         pass
 
     @abstractmethod
-    def get_utility(self, X, model):
+    def __call__(self, X:Tensor, model:'BaseModel') -> Tensor:
         pass

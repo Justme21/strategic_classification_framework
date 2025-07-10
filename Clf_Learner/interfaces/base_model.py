@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from torch import Tensor
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -15,7 +16,7 @@ class BaseModel(ABC):
         self.x_dim: int
 
     @abstractmethod
-    def get_params(self):
+    def get_params(self) -> Tensor:
         """Return the model parameters
         : return: model weights
         """
@@ -26,12 +27,12 @@ class BaseModel(ABC):
         """ Learn to predict the true y values associated with the given Xs
         : X: Data to learn from
         : y: True values
-        : return: training losses: list[num_epochs, num_batches]
+        : return: dict of containing training metrics
         """
-        return {'train_losses': list()}
+        pass
 
     @abstractmethod
-    def forward(self, X):
+    def forward(self, X) -> Tensor:
         """ Evaluate the output associated with input X
         : X: Data to be evaluated
         : return: Model Prediction
@@ -39,7 +40,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def predict(self, X):
+    def predict(self, X) -> Tensor:
         """ Predict the y for the given X
         : X: Data to predict
         : return: Model Prediction
@@ -48,7 +49,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def save_params(self, address: str):
+    def save_params(self, address: str) -> None:
         """ Save model parameters to a file
         : address (str): address to save model parameters to
         : return: None
@@ -56,7 +57,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def load_params(self, address: str):
+    def load_params(self, address: str) -> None:
         """ Load model parameters from a file
         : address (str) address of the file with the model parameters
         : return: None

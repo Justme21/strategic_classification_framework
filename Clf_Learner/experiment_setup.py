@@ -1,3 +1,4 @@
+import json
 import torch
 
 from .interfaces.base_dataset import BaseDataset
@@ -28,11 +29,11 @@ def _run_experiment(dataset:BaseDataset, model:BaseModel, lr:float, batch_size:i
         results['test'] = test_results
 
         if verbose:
-            print(f"Test Results: {results['test']}")
+            print(f"Test Results: {json.dumps(results['test'], indent=4)}") 
 
     return results
 
-def run_experiments(data_files:list, model_spec_names:list, best_response_name:str, cost_name:str, loss_name:str, model_name:str, utility_name:str,\
+def run_experiments(data_files:list, model_spec_names:list, best_response_name:str, cost_name:str, loss_name:str, model_name:str, utility_name:str, args:dict,\
                     seed_val:int, lr:float, batch_size:int, epochs:int, exp_result_dir:str, hist_result_dir:str, train:bool, test:bool, store:bool, verbose:bool):
 
     assert train or hist_result_dir, "Error: Either you must train a new model from scratch, or you must specify a historic directory to load model from"
@@ -44,7 +45,7 @@ def run_experiments(data_files:list, model_spec_names:list, best_response_name:s
 
     for filename in data_files:
         # Load dataset from spec
-        dataset = get_dataset(filename, -1)
+        dataset = get_dataset(filename, -1, args.get('datasets', {}))
 
         if dataset is None:
             if verbose:
@@ -54,7 +55,10 @@ def run_experiments(data_files:list, model_spec_names:list, best_response_name:s
         data_dim = dataset.size()[0][-1]
         init_args = {"x_dim": data_dim}
         for model_spec in model_specs:
-            model = get_model(model_spec=model_spec, init_args=init_args)
+            if verbose:
+                print(f"Running Experiment: Dataset {filename}\n Model: {model_spec}")
+        
+            model = get_model(model_spec=model_spec, init_args=init_args, comp_args=args)
             
             if seed_val is not None:
                 _set_seed(seed_val)
@@ -62,9 +66,6 @@ def run_experiments(data_files:list, model_spec_names:list, best_response_name:s
             if hist_result_dir is not None:
                 # Load model state from historical data
                 model = fetch_model(model, hist_result_dir, filename, model_spec)
-
-                import pdb
-                pdb.set_trace()
 
             results = _run_experiment(dataset, model, lr, batch_size, epochs, train, test, verbose)
     

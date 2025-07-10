@@ -1,5 +1,7 @@
 from ..interfaces import BaseCost
 
-COST_DICT: dict[str, type[BaseCost]] = {
+from .quadratic_cost import QuadraticCost
 
+COST_DICT: dict[str, type[BaseCost]] = {
+    "quadratic": QuadraticCost
 }
