@@ -17,8 +17,10 @@ class LinearModel(BaseModel, nn.Module):
         self.best_response = best_response
         self.loss = loss
 
-    def get_params(self):
-        return self.fc.weight[0]
+    def get_weights(self):
+        weights = self.fc.weight
+        bias = self.fc.bias.unsqueeze(0)
+        return torch.cat((weights, bias), dim=1)
 
     def forward(self, X):
         return torch.flatten(self.fc(X))

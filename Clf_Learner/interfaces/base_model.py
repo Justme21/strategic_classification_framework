@@ -16,8 +16,8 @@ class BaseModel(ABC):
         self.x_dim: int
 
     @abstractmethod
-    def get_params(self) -> Tensor:
-        """Return the model parameters
+    def get_weights(self) -> Tensor:
+        """Return the model weights
         : return: model weights
         """
         pass

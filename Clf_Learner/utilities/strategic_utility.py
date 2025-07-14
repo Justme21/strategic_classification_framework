@@ -1,3 +1,4 @@
+import torch 
 from torch import Tensor
 
 from ..interfaces import BaseUtility, BaseModel
@@ -7,5 +8,5 @@ class StrategicUtility(BaseUtility):
         self.coef = coef
 
     def __call__(self, X:Tensor, model:'BaseModel') -> Tensor:
-        pred = model.predict(X)
+        pred = model.forward(X)
         return self.coef*pred

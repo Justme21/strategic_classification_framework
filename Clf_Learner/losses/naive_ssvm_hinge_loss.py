@@ -4,7 +4,7 @@ from ..interfaces import BaseLoss, BaseModel
 from ..tools.utils import RELU
 
 def _regularization_loss(model):
-    W = model.get_params()
+    W = model.get_weights()
     norm = (torch.norm(W, p=2)**2)
     return norm
 

@@ -10,11 +10,16 @@ def _get_columns(df, columns):
     else:
         return df[columns]
     
+def _format_target_col(target_col, num_cols):
+    if isinstance(target_col, int):
+        if target_col < 0:
+            target_col = num_cols + target_col
+    return target_col
+
 def _check_cols(df, target_col, strat_cols):
     if isinstance(target_col, int):
         num_cols = df.shape[1]
-        if target_col < 0:
-            target_col = df.shape[1] + target_col
+        assert target_col>=0, f"Error: Expected target_col to have been formatted by now ({target_col})"
         assert target_col<df.shape[1], f"Error: Column value {target_col} invalid for dataset with {num_cols} columns"
         if strat_cols is not None:
             assert all([isinstance(x, int) and x<num_cols for x in strat_cols])
@@ -35,6 +40,8 @@ class CSVDataset(TensorDataset):
         else:
             data_address = f"{DATA_DIR}/{csv_file}"
         data_df = pd.read_csv(data_address)
+
+        target_col = _format_target_col(target_col, data_df.shape[1])
 
         _check_cols(data_df, target_col, strat_cols)
 

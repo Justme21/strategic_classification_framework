@@ -1,4 +1,4 @@
-import torch.linalg
+import torch
 from torch import Tensor
 
 from ..interfaces import BaseCost
@@ -8,5 +8,5 @@ class QuadraticCost(BaseCost):
         self.eps = eps
 
     def __call__(self, X:Tensor, Z:Tensor) -> Tensor:
-        dist = torch.sum(torch.pow(X-Z, 2))
+        dist = torch.sum(torch.pow(X-Z, 2),1)
         return 1/(2*self.eps)*dist

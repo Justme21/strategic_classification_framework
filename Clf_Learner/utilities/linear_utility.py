@@ -7,5 +7,5 @@ class LinearUtility(BaseUtility):
         self.coef = coef
 
     def __call__(self, X:Tensor, model:'BaseModel') -> Tensor:
-        weight = model.get_params()
+        weight = model.get_weights()
         return weight*X
