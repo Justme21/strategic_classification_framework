@@ -13,5 +13,5 @@ class BaseBestResponse(ABC):
         pass
 
     @abstractmethod
-    def __call__(self, X:Tensor, model:'BaseModel'):
+    def __call__(self, X:Tensor, model:'BaseModel') -> Tensor:
         pass

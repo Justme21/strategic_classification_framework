@@ -8,12 +8,12 @@ class LinearBestResponse(BaseBestResponse):
         self.radius = radius # The degree to which an input can be strategically perturbed
 
     def __call__(self, X, model):
-        W = model.get_weights()
+        W = model.get_weights(include_bias=False) # Omit bias term when computing distance
 
         # Compute magnitude and direction of movement orthogonal to decision boundary
         norm = torch.norm(W, p=2)
         distances = model.forward(X).detach()/norm
-        X_moved = torch.stack([x - d*W/norm for x, d in zip(X, distances)])
+        X_moved = torch.cat([x - d*W/norm for x, d in zip(X, distances)], dim=0)
         
         # Constraints applied to best responses
         cond1 = -self.radius <= distances # Must be within radius of decision boundary

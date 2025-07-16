@@ -34,9 +34,6 @@ def _evaluate_accuracy(model, X, y, strat_X):
     clean_confusion = _get_confusion_matrix(model, X, y)
     strat_confusion = _get_confusion_matrix(model, strat_X, y)
 
-    import pdb
-    pdb.set_trace()
-
     return {"clean_accuracy": clean_accuracy,"strategic_accuracy": strategic_accuracy, "clean_confusion": clean_confusion, "strategic_confusion": strat_confusion}
 
 def evaluate_model(model:BaseModel, dataset:BaseDataset):

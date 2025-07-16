@@ -17,10 +17,13 @@ class LinearModel(BaseModel, nn.Module):
         self.best_response = best_response
         self.loss = loss
 
-    def get_weights(self):
+    def get_weights(self, include_bias=True):
         weights = self.fc.weight
-        bias = self.fc.bias.unsqueeze(0)
-        return torch.cat((weights, bias), dim=1)
+        if include_bias:
+            bias = self.fc.bias.unsqueeze(0)
+            weights = torch.cat((weights, bias), dim=1)
+        
+        return weights
 
     def forward(self, X):
         return torch.flatten(self.fc(X))

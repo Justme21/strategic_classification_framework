@@ -16,7 +16,7 @@ class BaseModel(ABC):
         self.x_dim: int
 
     @abstractmethod
-    def get_weights(self) -> Tensor:
+    def get_weights(self, include_bias:bool=True) -> Tensor:
         """Return the model weights
         : return: model weights
         """
@@ -32,7 +32,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def forward(self, X) -> Tensor:
+    def forward(self, X:Tensor) -> Tensor:
         """ Evaluate the output associated with input X
         : X: Data to be evaluated
         : return: Model Prediction
@@ -40,7 +40,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def predict(self, X) -> Tensor:
+    def predict(self, X:Tensor) -> Tensor:
         """ Predict the y for the given X
         : X: Data to predict
         : return: Model Prediction
@@ -49,7 +49,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def save_params(self, address: str) -> None:
+    def save_params(self, address:str) -> None:
         """ Save model parameters to a file
         : address (str): address to save model parameters to
         : return: None
@@ -57,7 +57,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def load_params(self, address: str) -> None:
+    def load_params(self, address:str) -> None:
         """ Load model parameters from a file
         : address (str) address of the file with the model parameters
         : return: None

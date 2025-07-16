@@ -1,18 +1,19 @@
 import torch
+from torch import Tensor
 
 from ..interfaces import BaseLoss, BaseModel
 from ..tools.utils import RELU
 
-def _regularization_loss(model):
+def _regularization_loss(model:BaseModel):
     W = model.get_weights()
     norm = (torch.norm(W, p=2)**2)
     return norm
 
-def _neg_linear_loss(model:BaseModel, X_br, y):
-    return -y*model.forward(X_br) 
+def _neg_linear_loss(model:BaseModel, X:Tensor, y:Tensor):
+    return -y*model.forward(X) 
 
-def _log_loss(model:BaseModel, X_br):
-    exp = model.forward(X_br)
+def _log_loss(model:BaseModel, X:Tensor):
+    exp = model.forward(X)
     return torch.log(1 + torch.exp(exp))
 
 class LinearPlusLogisticLoss(BaseLoss):
@@ -22,7 +23,7 @@ class LinearPlusLogisticLoss(BaseLoss):
     def __init__(self, gamma=0, **kwargs):
         self.reg_weight = gamma
 
-    def __call__(self, model:BaseModel, X, y):
+    def __call__(self, model:BaseModel, X:Tensor, y:Tensor):
         reg = (self.reg_weight/2)*_regularization_loss(model)
 
         X_br = model.best_response(X, model)
