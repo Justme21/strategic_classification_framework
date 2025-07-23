@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import shutil
+import torch
 
 from .best_reponses import BR_DICT
 from .costs import COST_DICT
@@ -10,6 +11,7 @@ from .losses import LOSS_DICT
 from .models import MODEL_DICT
 from .utilities import UTILITY_DICT
 from .experiment_setup import run_experiments
+from .tools.device_tools import get_device
 from .tools.utils import RESULTS_DIR
 
 def _create_arg_parser():
@@ -33,6 +35,7 @@ def _create_arg_parser():
     parser.add_argument("--store", help="Include to store results from run", action='store_true')
     parser.add_argument("--verbose", help="Verbose mode", action='store_true')
     parser.add_argument("--args", help="(Optional) Dict formatted string passing arguments to specified component objects. Key values: [best response, cost, dataset, loss, model, utility]", type=json.loads, default={})
+    parser.add_argument("--gpu", help="Include to run experiments on GPU (or MPS) device (if available)", action='store_true')
 
     return parser.parse_args()
 
@@ -65,7 +68,14 @@ if __name__ == "__main__":
         args.dirname = dirname
 
     _save_args(args)
-    
+
+    if args.gpu:
+        # Not sure if this is the best place to have this. 
+        # Also, setting default device might cause some slight performance cost compared to
+        # loading everything on to device manually. 
+        device = get_device()
+        torch.set_default_device(device)
+
     run_experiments(data_files=args.datasets, model_spec_names=args.specs, best_response_name=args.best_response, cost_name=args.cost, loss_name=args.loss,\
                      model_name=args.model, utility_name=args.utility, args=args.args, seed_val=args.seed, lr=args.lr, batch_size=args.batch, epochs=args.epochs,\
                         exp_result_dir=args.dirname, hist_result_dir=args.hist_result_dirname, train=args.train, test=args.test, store=args.store, verbose=args.verbose)
