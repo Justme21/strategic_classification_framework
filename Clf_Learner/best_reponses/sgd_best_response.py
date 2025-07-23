@@ -19,7 +19,7 @@ class SGDBestResponse(BaseBestResponse):
         Z = X.detach().clone().requires_grad_()
         opt = self.opt([Z], self.lr)
 
-        pred_old = model.predict(X)
+        pred_old = model.predict(X).squeeze(1)
         cond1 = pred_old<0
         for _ in range(self.max_epochs):
             opt.zero_grad()
@@ -33,7 +33,7 @@ class SGDBestResponse(BaseBestResponse):
                 break
         
         dist = torch.sqrt(torch.sum(torch.pow(X-Z, 2), dim=1))
-        pred_new = model.predict(Z)
+        pred_new = model.predict(Z).squeeze(1)
 
         cond2 = dist<self.radius # Only accept changes that are within radius
         cond3 = pred_new>0 # Only accept changes that result in positive prediction
