@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
+from ..tools.utils import SAMPLE_DIM
 
 class LinearModel(BaseModel, nn.Module):
     def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, x_dim:int, **kwargs):
@@ -26,11 +27,12 @@ class LinearModel(BaseModel, nn.Module):
         return weights
 
     def forward(self, X):
-        return torch.flatten(self.fc(X))
+        # unsqueeze to ensure model output has the same dimensionality as non-deterministic model
+        return self.fc(X).unsqueeze(SAMPLE_DIM)
 
     def predict(self, X):
-        y_hat = self.forward(X)
-        y_hat[torch.abs(y_hat) <= 1e-10] = 0
+        y_hat = self.forward(X).squeeze(SAMPLE_DIM)
+        y_hat[torch.abs(y_hat) <= 1e-10] = 0 # This is a dangerous stopgap, we later map negatives to 0.
         return torch.sign(y_hat)
 
     def fit(self, train_dset:BaseDataset, opt, lr, batch_size=128, epochs=100, verbose=False):

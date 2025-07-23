@@ -14,6 +14,11 @@ class BaseModel(ABC):
         self.best_response: BaseBestResponse
         self.loss: BaseLoss
         self.x_dim: int
+        self.deterministic: bool=True # whether it's a deterministic model or a randomised model
+
+    def is_deterministic(self) -> bool:
+        """Return whether or not the model is deterministic. Affects primarily behaviour in the loss function"""
+        return self.deterministic
 
     @abstractmethod
     def get_weights(self, include_bias:bool=True) -> Tensor:
