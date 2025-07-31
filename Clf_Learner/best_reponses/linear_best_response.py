@@ -20,8 +20,6 @@ class LinearBestResponse(BaseBestResponse):
         cond2 = distances < 0 # Must be beneath decision boundary
         cond = cond1*cond2
 
-        import pdb
-        pdb.set_trace()
         cond = cond.repeat((X.size(1), 1)).T
         X_opt = torch.where(cond, X_moved, X)
 

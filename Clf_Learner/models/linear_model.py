@@ -27,8 +27,9 @@ class LinearModel(BaseModel, nn.Module):
         return weights
 
     def forward(self, X):
+        # Flatten to make output uni-dimensional to match y
         # unsqueeze to ensure model output has the same dimensionality as non-deterministic model
-        return self.fc(X).unsqueeze(SAMPLE_DIM)
+        return torch.flatten(self.fc(X)).unsqueeze(SAMPLE_DIM)
 
     def predict(self, X):
         y_hat = self.forward(X).squeeze(SAMPLE_DIM)

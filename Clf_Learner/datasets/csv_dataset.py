@@ -55,7 +55,7 @@ class CSVDataset(TensorDataset):
         y_df = _get_columns(data_df, [target_col])
         
         X = torch.tensor(X_df.values, dtype=torch.float32)
-        y = torch.tensor(y_df.values, dtype=torch.float32)
+        y = torch.tensor(y_df.values, dtype=torch.float32).squeeze()
 
         super().__init__(X=X, y=y)
 

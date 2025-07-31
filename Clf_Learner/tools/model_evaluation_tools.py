@@ -28,7 +28,7 @@ def _get_confusion_matrix(y, pred):
 
     return {"TP": TP, "FP": FP, "FN": FN, "TN": TN}
 
-def _evaluate_accuracy(y, X, pred_X, strat_X, pred_strat_X):
+def _evaluate_accuracy(model, y, X, pred_X, strat_X, pred_strat_X):
     clean_accuracy = _calc_accuracy(y, pred_X)
     strategic_accuracy = _calc_accuracy(y, pred_strat_X)
 
@@ -36,9 +36,6 @@ def _evaluate_accuracy(y, X, pred_X, strat_X, pred_strat_X):
     # strat_confusion = _get_confusion_matrix(model, strat_X, y)
     clean_confusion = _get_confusion_matrix(y, pred_X)
     strat_confusion = _get_confusion_matrix(y, pred_strat_X)
-
-    import pdb
-    pdb.set_trace()
 
     return {"clean_accuracy": clean_accuracy,"strategic_accuracy": strategic_accuracy, "clean_confusion": clean_confusion, "strategic_confusion": strat_confusion}
 
@@ -69,7 +66,7 @@ def evaluate_model(model:BaseModel, dataset:BaseDataset):
         pred_strat_X = model.predict(strat_X).squeeze(1)
 
     results['data stats'] = _evaluate_dataset(X, y)
-    results['accuracy'] = _evaluate_accuracy(y, X, pred_X, strat_X, pred_strat_X)
+    results['accuracy'] = _evaluate_accuracy(model, y, X, pred_X, strat_X, pred_strat_X)
 
     return results
     
