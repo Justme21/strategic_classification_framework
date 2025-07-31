@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
 
-from .utils import RESULTS_DIR
-
 from ..interfaces import BaseModel
 
 def _format_dataset_filename(dataset_filename:str):
@@ -13,6 +11,9 @@ def _format_model_spec(model_spec:dict):
     return "_".join([f"{x[0]}_{model_spec[x]}" for x in keys])
 
 def _get_results_address(result_addr:str, dataset_filename:str, model_spec:dict):
+    from .utils import RESULTS_DIR
+    # Importing here speficially to accomodate when you might be calling module not from main (e.g. in Jupyter notebook)
+    # To allow for RESULTS_DIR value to be prescriptively set
     dataset_dirname = _format_dataset_filename(dataset_filename)
     model_spec_dirname = _format_model_spec(model_spec)
 
@@ -28,13 +29,13 @@ def store_model(model:BaseModel, results_dir_addr:str, dataset_filename:str, mod
     dir_addr = _get_results_directory(results_dir_addr, dataset_filename, model_spec)
     model.save_params(dir_addr)
 
-def fetch_model(model:BaseModel, results_dir_addr:str, dataset_filename:str, model_spec:dict):
-    dir_addr = _get_results_directory(results_dir_addr, dataset_filename, model_spec)
+def fetch_model(model:BaseModel, results_dirname:str, dataset_filename:str, model_spec:dict):
+    dir_addr = _get_results_directory(results_dirname, dataset_filename, model_spec)
     model.load_params(dir_addr)
     return model
 
-def store_results(results:dict, results_dir_addr:str, dataset_filename:str, model_spec:dict):
-    dir_addr = _get_results_directory(results_dir_addr, dataset_filename, model_spec)
+def store_results(results:dict, results_dirname:str, dataset_filename:str, model_spec:dict):
+    dir_addr = _get_results_directory(results_dirname, dataset_filename, model_spec)
 
     with open(f"{dir_addr}/results.json", 'w') as f:
         json.dump(results, f, indent=4)
