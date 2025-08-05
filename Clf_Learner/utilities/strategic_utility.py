@@ -4,10 +4,6 @@ from typing import cast
 
 from ..interfaces import BaseUtility, BaseModel
 
-SCALE = 100 #Arbitrary large value to make SCALE*torch.clamp result close to {-1,1}
-
-#LOSS = torch.nn.CrossEntropyLoss
-
 class AltStrategicUtility(torch.autograd.Function):
     @staticmethod
     def forward(ctx, model_out) -> Tensor:
