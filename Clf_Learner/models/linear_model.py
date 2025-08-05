@@ -47,7 +47,12 @@ class LinearModel(BaseModel, nn.Module):
             t1 = time.time()
             batch = 1
             train_losses.append([])
+            first_round = True
             for X, y in train_loader:
+                if first_round:
+                    Z = self.best_response(X, self)
+                    print(f"Weights: {self.get_weights()}")
+                    first_round = False
                 opt.zero_grad()
                 l = self.loss(self, X, y)
                 l.backward()
@@ -57,6 +62,9 @@ class LinearModel(BaseModel, nn.Module):
                 #    print(f"batch {batch} / {len(train_loader)} | loss: {l.item()}")
                 batch += 1
 
+            #t1 = self.best_response(X, self, debug=True)
+
+            print(f"End of Epoch: {epoch}: {self.get_weights()}")
             #TODO: Validation evaluation should go here
             
             t2 = time.time()

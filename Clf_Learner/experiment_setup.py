@@ -25,8 +25,9 @@ def _run_experiment(dataset:BaseDataset, model:BaseModel, lr:float, batch_size:i
     # If eval, load model and pass to eval
     if test:
         # Test the model, get results
-        test_results = evaluate_model(model, dataset)
-        results['test'] = test_results
+        with torch.no_grad():
+            test_results = evaluate_model(model, dataset)
+            results['test'] = test_results
 
         if verbose:
             print(f"Test Results: {json.dumps(results['test'], indent=4)}") 

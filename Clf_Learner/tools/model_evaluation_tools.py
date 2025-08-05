@@ -40,8 +40,11 @@ def evaluate_model(model:BaseModel, dataset:BaseDataset):
     results = {}
 
     X, y = dataset.get_all_vals()
-    strat_X = model.best_response(X, model)
+    with torch.enable_grad():
+        # evaluate_model is done with grad disabled to freeze weights
+        strat_X = model.best_response(X, model)
 
+    t1 = strat_X != X
     results['data stats'] = _evaluate_dataset(X, y)
     results['accuracy'] = _evaluate_accuracy(model, X, y, strat_X)
 
