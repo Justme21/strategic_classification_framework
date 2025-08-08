@@ -59,8 +59,9 @@ if __name__ == "__main__":
     # Ingest and parse arguments
     args = _create_arg_parser()
 
-    # Create new directory to store results
-    _make_results_dir(args.dirname)
+    if args.store:
+        # Create new directory to store results
+        _make_results_dir(args.dirname)
 
     if args.arg_file is not None:
         dirname = args.dirname
