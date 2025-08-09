@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import time
 import torch
@@ -7,12 +8,18 @@ from torch.utils.data import DataLoader
 
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
 
-class LinearModel(BaseModel, nn.Module):
+class ParabolicModel(BaseModel, nn.Module):
+    """Parabolic Classifier of the form: f(x) = x[1] - a(x[0]-b)^2 + c"""
     def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, x_dim:int, **kwargs):
         BaseModel.__init__(self, best_response, loss, x_dim)
         nn.Module.__init__(self)
+        assert x_dim == 2, "Error: At the moment Parabolic classifier can only be applied to 2D-datasets"
         self.x_dim = x_dim
-        self.fc = nn.Linear(x_dim, 1, bias=True)
+        #self.fc = nn.Linear(x_dim, 1, bias=True)
+
+        self.angle = nn.Parameter(2*math.pi*torch.rand(1))
+        self.coef = nn.Parameter(torch.tensor([1.0]))
+        self.offset = nn.Parameter(torch.rand(2))
 
         self.best_response = best_response
         self.loss = loss
@@ -20,23 +27,53 @@ class LinearModel(BaseModel, nn.Module):
     def get_boundary_vals(self, X):
         """(Optional) For the input 1-D X values, returns the y values that would lie
             on the model decision boundary. This is only used for data visualisation (not included in repo)"""
-        W = self.fc.weight[0]
-        b = self.fc.bias
+        s = torch.sin(self.angle)
+        c = torch.cos(self.angle)
 
-        y = (-W[0]*X-b)*(1.0/W[1]) 
-        boundary_coords = torch.stack([X,y], dim=1)
+        A = torch.abs(self.coef)*(s**2)
+        B = -2*torch.abs(self.coef)*(X*c - self.offset[0])*s - c
+        C = -self.offset[1] + torch.abs(self.coef)*(X*c - self.offset[0])**2 - X*s
+
+        if A>0:
+            discriminant = B**2 - 4*A*C
+            re_discr = discriminant[discriminant>=0] # Omit imaginary solutions
+            sqrt_discr = torch.sqrt(re_discr)
+
+            X_re = X[discriminant>=0]
+            y_plus = (-B[discriminant>=0] + sqrt_discr)/(2*A)
+            y_neg = (-B[discriminant>=0] - sqrt_discr)/(2*A)
+
+            X_plus = torch.stack([X_re, y_plus],dim=1)
+            X_neg = torch.stack([X_re, y_neg],dim=1)
+
+            X_plus = torch.flip(X_plus, dims=[0]) # Flip the positives to make x dim continuous for plotting
+            boundary_coords = torch.cat([X_plus, X_neg], dim=0)
+
+        else:
+            # Angle is either 0 or pi, either way y=x^2
+            assert self.coef!=0, "Error: Can't produce visualisation; model scaling coefficient is 0"
+            y = torch.abs(self.coef)*(X**2)
+            boundary_coords = torch.stack([X, y], dim=1)
+        #import pdb
+        #pdb.set_trace()
         return boundary_coords
 
     def get_weights(self, include_bias=True):
-        weights = self.fc.weight
-        if include_bias:
-            bias = self.fc.bias.unsqueeze(0)
-            weights = torch.cat((weights, bias), dim=1)
-        
-        return weights
+        # TODO: Figure out if offset values should be returned here
+        return torch.cat((self.angle, self.coef, self.offset), dim=0)
 
     def forward(self, X):
-        return torch.flatten(self.fc(X))
+        # Step 1: Rotate coordinate space
+        s = torch.sin(self.angle)
+        c = torch.cos(self.angle)
+        rot_mat = torch.stack([torch.stack([c, -s], dim=1),
+                                torch.stack([s, c], dim=1)], dim=0).squeeze()
+        X = torch.matmul(X, torch.transpose(rot_mat, 0, 1))
+
+        # Step 2: Apply Classifier
+        # Doing absolute value of coef because it being negative is the same as the angle being pi greater. So don't want overlap
+        res = X[:,1] - torch.abs(self.coef)*(torch.pow(X[:,0]-self.offset[0],2)) + self.offset[1]
+        return torch.flatten(res)
 
     def predict(self, X):
         y_hat = self.forward(X)
