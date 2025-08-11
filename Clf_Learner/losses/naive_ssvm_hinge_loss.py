@@ -18,8 +18,8 @@ class NaiveStrategicSVMHingeLoss(BaseLoss):
     # As defined in Generalised Strategic Classification
     # https://github.com/SagiLevanon1/GSC/blob/main/generalization.ipynb
 
-    def __init__(self, reg_weight=0, **kwargs):
-        self.reg_weight = reg_weight
+    def __init__(self, gamma=0, **kwargs):
+        self.reg_weight = gamma
 
     def __call__(self, model:BaseModel, X:Tensor, y:Tensor):
         reg = self.reg_weight*_regularization_loss(model)

@@ -18,6 +18,16 @@ class LinearModel(BaseModel, nn.Module):
         self.best_response = best_response
         self.loss = loss
 
+    def get_boundary_vals(self, X):
+        """(Optional) For the input 1-D X values, returns the y values that would lie
+            on the model decision boundary. This is only used for data visualisation (not included in repo)"""
+        W = self.fc.weight[0]
+        b = self.fc.bias
+
+        y = (-W[0]*X-b)*(1.0/W[1]) 
+        boundary_coords = torch.stack([X,y], dim=1)
+        return boundary_coords
+
     def get_weights(self, include_bias=True):
         weights = self.fc.weight
         if include_bias:
@@ -60,6 +70,7 @@ class LinearModel(BaseModel, nn.Module):
                 #    print(f"batch {batch} / {len(train_loader)} | loss: {l.item()}")
                 batch += 1
 
+            print(f"End of Epoch: {epoch}: {self.get_weights()}")
             #TODO: Validation evaluation should go here
             
             t2 = time.time()

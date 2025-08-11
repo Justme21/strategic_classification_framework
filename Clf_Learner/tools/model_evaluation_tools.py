@@ -18,55 +18,35 @@ def _calc_accuracy(label1, label2):
 def _get_confusion_matrix(y, pred):
     #pred = model.predict(X)
 
-    pred = torch.where(pred==-1, 0, 1)    
+    pred = torch.where(pred==-1, 0, 1) 
     y = torch.where(y==-1, 0, 1)
 
-    TP = torch.dot(pred,y).item()
-    TN = torch.dot(1-pred, 1-y).item()
-    FP = torch.dot(pred, 1-y).item()
-    FN = torch.dot(1-pred, y).item()
+    TP = (pred*y).sum().item()
+    TN = ((1-pred)*(1-y)).sum().item()
+    FP = (pred*(1-y)).sum().item()
+    FN = ((1-pred)*y).sum().item()
 
     return {"TP": TP, "FP": FP, "FN": FN, "TN": TN}
 
-def _evaluate_accuracy(model, y, X, pred_X, strat_X, pred_strat_X):
-    clean_accuracy = _calc_accuracy(y, pred_X)
-    strategic_accuracy = _calc_accuracy(y, pred_strat_X)
+def _evaluate_accuracy(model, X, y, strat_X):
+    clean_accuracy = _calc_accuracy(y, model.predict(X))
+    strategic_accuracy = _calc_accuracy(y, model.predict(strat_X))
 
-    # clean_confusion = _get_confusion_matrix(model, X, y)
-    # strat_confusion = _get_confusion_matrix(model, strat_X, y)
-    clean_confusion = _get_confusion_matrix(y, pred_X)
-    strat_confusion = _get_confusion_matrix(y, pred_strat_X)
+    clean_confusion = _get_confusion_matrix(model, X, y)
+    strat_confusion = _get_confusion_matrix(model, strat_X, y)
 
     return {"clean_accuracy": clean_accuracy,"strategic_accuracy": strategic_accuracy, "clean_confusion": clean_confusion, "strategic_confusion": strat_confusion}
-
-# def _evaluate_accuracy(model, X, y, strat_X):
-#     clean_accuracy = _calc_accuracy(y, model.predict(X))
-#     strategic_accuracy = _calc_accuracy(y, model.predict(strat_X))
-
-#     clean_confusion = _get_confusion_matrix(model, X, y)
-#     strat_confusion = _get_confusion_matrix(model, strat_X, y)
-
-#     import pdb
-#     pdb.set_trace()
-
-#     return {"clean_accuracy": clean_accuracy,"strategic_accuracy": strategic_accuracy, "clean_confusion": clean_confusion, "strategic_confusion": strat_confusion}
 
 def evaluate_model(model:BaseModel, dataset:BaseDataset):
     results = {}
 
     X, y = dataset.get_all_vals()
-    y = y.squeeze(1)
-
-    with torch.no_grad():
-        #strat_X = model.best_response(X, model)
-        strat_X = X
-
-    with torch.no_grad():
-        pred_X = model.predict(X).squeeze(1)
-        pred_strat_X = model.predict(strat_X).squeeze(1)
+    with torch.enable_grad():
+        # evaluate_model is done with grad disabled to freeze weights
+        strat_X = model.best_response(X, model)
 
     results['data stats'] = _evaluate_dataset(X, y)
-    results['accuracy'] = _evaluate_accuracy(model, y, X, pred_X, strat_X, pred_strat_X)
+    results['accuracy'] = _evaluate_accuracy(model, y, X, strat_X)
 
     return results
     

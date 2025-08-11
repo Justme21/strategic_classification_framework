@@ -45,26 +45,27 @@ def _make_results_dir(dirname):
         shutil.rmtree(dir_addr)
     os.makedirs(dir_addr)
 
-def _save_args(args):
+def _save_args(args) -> None:
     with open(f'{RESULTS_DIR}/{args.dirname}/commandline_args.json', 'w') as f:
         json.dump(args.__dict__, f, indent=2)
 
-def _load_args(args):
-    with open(args.arg_file, "r") as f:
+def _load_args(dirname: str) -> argparse.Namespace:
+    args = argparse.Namespace()
+    with open(dirname, "r") as f:
         args.__dict__ = json.load(f)
-    
     return args
 
 if __name__ == "__main__":
     # Ingest and parse arguments
     args = _create_arg_parser()
 
-    # Create new directory to store results
-    _make_results_dir(args.dirname)
+    if args.store:
+        # Create new directory to store results
+        _make_results_dir(args.dirname)
 
     if args.arg_file is not None:
         dirname = args.dirname
-        args = _load_args(args)
+        args = _load_args(dirname)
         args.dirname = dirname
 
     _save_args(args)

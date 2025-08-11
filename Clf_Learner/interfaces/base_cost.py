@@ -7,5 +7,5 @@ class BaseCost(ABC):
         pass
 
     @abstractmethod
-    def __call__(self, X:Tensor, y:Tensor) -> Tensor:
+    def __call__(self, X:Tensor, Z:Tensor) -> Tensor:
         pass

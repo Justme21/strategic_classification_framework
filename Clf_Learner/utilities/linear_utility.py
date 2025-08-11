@@ -1,3 +1,5 @@
+import torch
+
 from torch import Tensor
 
 from ..interfaces import BaseUtility, BaseModel
@@ -7,5 +9,5 @@ class LinearUtility(BaseUtility):
         self.coef = coef
 
     def __call__(self, X:Tensor, model:'BaseModel') -> Tensor:
-        weight = model.get_weights()
-        return weight*X
+        weight = model.get_weights(include_bias=False)
+        return torch.matmul(X, torch.transpose(weight, 0, 1))

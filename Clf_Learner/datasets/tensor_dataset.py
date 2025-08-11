@@ -8,6 +8,8 @@ class TensorDataset(BaseDataset, Dataset):
     # train_dset = TensorDataset(X, r, y)
 
     def __init__(self, X:Tensor, y:Tensor):
+        assert len(y.shape) == 1, f"Error: downstream models expect target tensor to have a single dimension, current target tensor has shape {y.shape}"
+        
         self.X = X
         self.y = y
 
