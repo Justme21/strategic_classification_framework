@@ -20,10 +20,10 @@ def _get_confusion_matrix(model, X, y):
     pred = torch.where(pred==-1, 0, 1)    
     y = torch.where(y==-1, 0, 1)
 
-    TP = torch.dot(pred,y).item()
-    TN = torch.dot(1-pred, 1-y).item()
-    FP = torch.dot(pred, 1-y).item()
-    FN = torch.dot(1-pred, y).item()
+    TP = (pred*y).sum().item()
+    TN = ((1-pred)*(1-y)).sum().item()
+    FP = (pred*(1-y)).sum().item()
+    FN = ((1-pred)*y).sum().item()
 
     return {"TP": TP, "FP": FP, "FN": FN, "TN": TN}
 
