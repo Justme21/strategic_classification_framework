@@ -2,7 +2,6 @@ import torch
 from torch import Tensor
 
 from ..interfaces import BaseLoss, BaseModel
-from ..tools.utils import RELU
 
 def _regularization_loss(model:BaseModel):
     W = model.get_weights()

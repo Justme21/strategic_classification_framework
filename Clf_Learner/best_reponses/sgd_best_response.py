@@ -21,7 +21,7 @@ class SGDBestResponse(BaseBestResponse):
         Z = X.detach().clone().requires_grad_()
         opt = self.opt([Z], self.lr)
 
-        pred_old = model.predict(X).squeeze(1)
+        pred_old = model.predict(X)
         cond1 = pred_old<0
         for _ in range(self.max_epochs):
             opt.zero_grad()
@@ -31,7 +31,9 @@ class SGDBestResponse(BaseBestResponse):
             l = -(cond1*util).sum()
             l.backward(inputs=[Z])
             opt.step()
-            if abs(torch.max(Z.grad))<ZERO_THRESHOLD:
+
+            max_grad = torch.max(torch.abs(Z.grad)) if Z.grad is not None else 0
+            if max_grad<ZERO_THRESHOLD:
                 # Consider it converged
                 break
         

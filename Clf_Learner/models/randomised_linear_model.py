@@ -8,7 +8,6 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
-from ..tools.utils import SAMPLE_DIM
 
 class BayesianLinearModel(nn.Module):
     def __init__(self, in_dim:int, out_dim:int, num_comps:int): #bias=True)
@@ -51,19 +50,16 @@ class BayesianLinearModel(nn.Module):
         weights = means + stds*eps
 
         X = X.unsqueeze(1)
-        out = torch.bmm(X, weights.transpose(1,2)).squeeze(1)
+        out = torch.bmm(X, weights.transpose(1,2)).squeeze()
         return out
 
 
 class RandomisedLinearModel(BaseModel, nn.Module):
-    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, x_dim:int, num_comps:int=3, num_samples:int=5, **kwargs):
+    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, x_dim:int, num_comps:int=3, **kwargs):
         BaseModel.__init__(self, best_response, loss, x_dim)
         nn.Module.__init__(self)
         self.x_dim = x_dim
-        self.deterministic = False
         self.model = BayesianLinearModel(in_dim=x_dim, out_dim=1, num_comps=num_comps)
-
-        self.num_samples = num_samples #Number of samples to take to compute the expectation
 
         self.best_response = best_response
         self.loss = loss
@@ -78,22 +74,17 @@ class RandomisedLinearModel(BaseModel, nn.Module):
         weights = self.model.get_weights(include_bias)
         return weights
 
-    def forward(self, X, is_inference=False):
-        model_out = self.model(X).unsqueeze(SAMPLE_DIM)
-        if not is_inference:
-            for _ in range(self.num_samples-1):
-                model_out = torch.cat((model_out, self.model(X).unsqueeze(SAMPLE_DIM)), dim=SAMPLE_DIM)
-
+    def forward(self, X):
+        model_out = self.model(X)
         return model_out
 
-    def predict(self, X, is_inference=False):
+    def predict(self, X):
         # TODO: Probably want "num_samples" as an argument here so that you can specify how many weight samples you want to use to
         # evaluate the expected value over the model
-        y_hat = self.forward(X, is_inference)
+        y_hat = self.forward(X)
         y_hat[torch.abs(y_hat) <= 1e-10] = 0
         y_hat = torch.sign(y_hat) # Predictions
 
-        y_hat = torch.mean(y_hat, dim=SAMPLE_DIM) # Average Prediction over sample dim
         return torch.sign(y_hat) # Translate average prediction back into prediction
     
     def fit(self, train_dset:BaseDataset, opt, lr, batch_size=128, epochs=100, verbose=False):
@@ -108,7 +99,6 @@ class RandomisedLinearModel(BaseModel, nn.Module):
         train_losses = []
         for epoch in range(epochs):
             t1 = time.time()
-            batch = 1
             train_losses.append([])
             for X, y in train_loader:                    
                 opt.zero_grad()
@@ -116,14 +106,13 @@ class RandomisedLinearModel(BaseModel, nn.Module):
                 l.backward()
                 opt.step()
                 train_losses[-1].append(l.item())
-                #if verbose:
-                #    print(f"batch {batch} / {len(train_loader)} | loss: {l.item()}")
-                batch += 1
 
             #TODO: Validation evaluation should go here
             
             t2 = time.time()
             if verbose:
+                probs = torch.softmax(self.model.mix_weights, dim=0)
+                print(f"Mix Weights: {probs}\n Means: {self.model.mean}\n Log Sigma: {self.model.log_sigma}")
                 print(f"------------- epoch {epoch+1} / {epochs} | time: {t2-t1} sec | loss: {np.mean(train_losses[-1])}")
         
         if verbose:
