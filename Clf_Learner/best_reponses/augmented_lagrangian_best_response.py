@@ -60,7 +60,7 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
         #print(f"Initial number of negative classifications: {cond1.sum()}")
 
         # Lagrangian coefficients for each constraint
-        lam_init = 100
+        lam_init = 100 #NOTE: This parameter affects the magnitude of parameter changes in each step
         lam1 = lam_init * torch.ones((len(X)))
         lam2 = lam_init * torch.ones((len(X)))
 
