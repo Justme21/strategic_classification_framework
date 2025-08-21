@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
 
-class RandomisedLinearModel(BaseModel, nn.Module):
+class RandomisedLinearDeltaModel(BaseModel, nn.Module):
     def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, x_dim:int, num_comps:int=3, **kwargs):
         BaseModel.__init__(self, best_response, loss, x_dim)
         nn.Module.__init__(self)
@@ -22,7 +22,6 @@ class RandomisedLinearModel(BaseModel, nn.Module):
 
         self.mix_logits = nn.Parameter(torch.zeros(num_comps)) # Mixing distribution
         self.mean = nn.Parameter(torch.randn(num_comps, 1, x_dim))
-        self.log_sigma = nn.Parameter(torch.full((num_comps, 1, x_dim), -1.0))
         self.bias = nn.Parameter(torch.zeros(num_comps, 1))
 
         self.best_response = best_response
@@ -32,10 +31,10 @@ class RandomisedLinearModel(BaseModel, nn.Module):
         return self.mean
     
     def get_log_std(self) -> Tensor:
-        return self.log_sigma
+        return torch.zeros([self.num_comps, 1, self.x_dim])
 
     def get_weights(self, include_bias=True):
-        weights = torch.cat((self.get_mean(), self.get_log_stds()), dim=-1) # TODO: Decide what do to with stds here
+        weights = torch.cat((self.get_mean(), self.get_log_std()), dim=-1) # TODO: Decide what do to with stds here
         return weights
 
     def get_mixture_probs(self) -> Tensor:
@@ -46,21 +45,17 @@ class RandomisedLinearModel(BaseModel, nn.Module):
         
         # Sample Mixture Weights per batch element
         mix_indices = F.gumbel_softmax(self.mix_logits.expand(batch_size, -1), tau=self.tau, hard=self.gumbel_hard)
-        mix_indices = mix_indices.view(batch_size, self.num_comps, 1, 1)
 
         # Multiply the sampled indices (one-hot) by the means and stds to get the sampled values
-        means = torch.einsum("bk,koi->boi", mix_indices, self.mean)      
-        sigmas = torch.einsum("bk,koi->boi", mix_indices, self.log_sigma.exp())
+        means = torch.einsum("bk,koi->boi", mix_indices, self.mean)
         biases = torch.einsum("bk,ko->bo", mix_indices, self.bias)
 
         # Reparametrisation Trick
-        eps = torch.randn(batch_size, self.out_dim, self.x_dim)
-        weights = means + sigmas*eps
+        weights = means
 
         X = X.unsqueeze(1)
-        out = torch.bmm(X, weights.transpose(1,2)).squeeze() + biases
-        import pdb
-        pdb.set_trace()
+        out = torch.einsum("boi,boi->bo", X, weights) + biases
+        out = out.squeeze()
         return out
 
     def predict(self, X):
@@ -97,7 +92,7 @@ class RandomisedLinearModel(BaseModel, nn.Module):
             t2 = time.time()
             if verbose:
                 probs = torch.softmax(self.get_mixture_probs(), dim=0)
-                print(f"Mix Weights: {probs}\n Means: {self.model.mean}\n Log Sigma: {self.model.log_sigma}")
+                print(f"Mix Weights: {probs}\n Means: {self.mean}\nBiases: {self.bias}")
                 print(f"------------- epoch {epoch+1} / {epochs} | time: {t2-t1} sec | loss: {np.mean(train_losses[-1])}")
         
         if verbose:

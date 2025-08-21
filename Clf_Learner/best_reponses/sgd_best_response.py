@@ -43,7 +43,6 @@ class SGDBestResponse(BaseBestResponse):
 
         cond=cond1*cond2
         cond = cond.repeat(X.size(1), 1).T
-
+            
         X_opt = torch.where(cond, Z, X)
-
         return X_opt
