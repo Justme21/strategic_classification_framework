@@ -1,8 +1,8 @@
 import torch
+import torch.nn.functional as F
 from torch import Tensor
 
 from ..interfaces import BaseLoss, BaseModel
-from ..tools.utils import RELU
 
 def _regularization_loss(model:BaseModel):
     W = model.get_weights()
@@ -11,8 +11,8 @@ def _regularization_loss(model:BaseModel):
 
 def _hinge_loss(model:BaseModel, X:Tensor, y:Tensor):
     #Smart Strategic SVM version of the hinge loss
-    acc_term = y*model.forward(model.best_response(X, model))
-    return torch.mean(RELU(1-acc_term))
+    acc_term = y*model.forward_loss(model.best_response(X, model))
+    return torch.mean(F.relu(1-acc_term))
 
 class NaiveStrategicSVMHingeLoss(BaseLoss):
     # As defined in Generalised Strategic Classification

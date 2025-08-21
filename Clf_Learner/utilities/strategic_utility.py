@@ -26,7 +26,7 @@ class StrategicUtility(BaseUtility):
         self.coef = coef
 
     def __call__(self, X:Tensor, model:'BaseModel') -> Tensor:
-        model_out = model.forward(X)
+        model_out = model.forward_utility(X)
         pred = cast(torch.Tensor, AltStrategicUtility.apply(model_out)) # Casting just to keep with the type-hinting
 
         return self.coef*pred

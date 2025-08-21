@@ -16,9 +16,18 @@ class BaseModel(ABC):
         self.x_dim: int
         self.deterministic: bool=True # whether it's a deterministic model or a randomised model
 
+    # Adding 'is_deterministic' because randomised classifiers will have functions deterministic ones won't
     def is_deterministic(self) -> bool:
         """Return whether or not the model is deterministic. Affects primarily behaviour in the loss function"""
         return self.deterministic
+
+    # Adding forward variants to handle the case where the forward function called in the best response (or the loss) might not be the standard forward
+    # TODO: If this is preserved then make forward internal facing (_forward)
+    def forward_utility(self, X:Tensor) -> Tensor:
+        return self.forward(X)
+    
+    def forward_loss(self, X:Tensor) -> Tensor:
+        return self.forward(X)
 
     @abstractmethod
     def get_weights(self, include_bias:bool=True) -> Tensor:
