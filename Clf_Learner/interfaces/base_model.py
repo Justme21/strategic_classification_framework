@@ -9,22 +9,34 @@ if TYPE_CHECKING:
 
 class BaseModel(ABC):
     @abstractmethod
-    def __init__(self, best_response:'BaseBestResponse', loss:'BaseLoss', x_dim=None):
+    def __init__(self, best_response:'BaseBestResponse', loss:'BaseLoss', x_dim:int=None, is_primary:bool=True):
         # These are defined here so that the type-hinting is consistent
         self.best_response: BaseBestResponse
         self.loss: BaseLoss
         self.x_dim: int
         self.deterministic: bool=True # whether it's a deterministic model or a randomised model
+        self._is_primary: bool=is_primary
 
     def is_deterministic(self) -> bool:
         """Return whether or not the model is deterministic. Affects primarily behaviour in the loss function"""
         return self.deterministic
+    
+    def is_primary(self) -> bool:
+        """Return whether or not the model is the primary model being run for the experiment.
+           Model is primary if it has trainable parameters. Models are assumed to be primary unless specified otherwise"""
+        return self._is_primary
 
     @abstractmethod
     def get_weights(self, include_bias:bool=True) -> Tensor:
         """Return the model weights
         : return: model weights
         """
+        pass
+
+    @abstractmethod
+    def set_weights(self, weights) -> None:
+        """Set the model weights
+        : return: None"""
         pass
 
     @abstractmethod
