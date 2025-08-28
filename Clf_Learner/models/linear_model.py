@@ -63,8 +63,6 @@ class LinearModel(BaseModel, nn.Module):
                 l.backward()
                 opt.step()
                 train_losses[-1].append(l.item())
-                #if verbose:
-                #    print(f"batch {batch} / {len(train_loader)} | loss: {l.item()}")
                 batch += 1
 
             print(f"End of Epoch: {epoch}: {self.get_weights()}")
