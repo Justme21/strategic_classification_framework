@@ -45,8 +45,7 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
         
         L = cost + benefit_comp + benefit_lagrange + feasibility_comp + feasibility_lagrange
 
-        #return L
-        return cost, benefit_comp, benefit_lagrange, feasibility_comp, feasibility_lagrange
+        return L
 
     def __call__(self, X:torch.Tensor, model:BaseModel, debug=False) ->torch.Tensor:
         #print("Starting Best Response Computation")
@@ -73,19 +72,15 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
             # Primal Optimisation
             for _ in range(self.steps_per_epoch):
                 opt.zero_grad()
-                #util = self._get_utility(Z, X, model, lam1, lam2, mu)
-                cost, benefit_comp, benefit_lagrange, feasibility_comp, feasibility_lagrange = self._get_utility(Z, X, model, lam1, lam2, mu)
-                util = cost + benefit_comp + benefit_lagrange + feasibility_comp + feasibility_lagrange
+                util = self._get_utility(Z, X, model, lam1, lam2, mu)
 
                 l = (cond1*util).mean()
-                #print(f"Cost: {cost.sum().item()}\t Constr: {(util-cost).sum().item()}\t Loss: {l.item()}")
                 l.backward(inputs=[Z])
                 opt.step()
 
                 max_grad = torch.max(torch.abs(Z.grad)) if Z.grad is not None else 0
                 if max_grad<ZERO_PRIMAL_THRESHOLD:
                     # Consider it converged
-                    #print("Gradient 0; ending inner loop")
                     break
 
             # Dual Optimisation
@@ -97,10 +92,8 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
 
                 max_violation = torch.max(torch.stack([c1.max(), c2.max()])).item()
 
-                #print(f"Max Violation is: {max_violation}")
                 if max_violation <= ZERO_DUAL_THRESHOLD:
                     # All constraint conditions satisfied
-                    #print("No violations; ending outer loop")
                     break
 
                 # Update the dual variables
@@ -109,11 +102,6 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
 
                 # Increase penalty parameter to exert more constraint pressure on next iteration
                 mu *= self.mu_mult
-
-                #print(f"After update: lam1: {lam1.mean().item()}\tlam2: {lam2.mean().item()}\t Mu: {mu}")
-                #print(f"Cost: {cost.mean().item()} F(Z): {self._utility(Z, model).mean().item()}")
-                #print(f"C1; Max: {c1.max().item()}\t Mean: {c1.mean().item()}")
-                #print(f"C2; Max: {c2.max().item()}\t Mean: {c2.mean().item()}")
 
         # Produce outputs
         with torch.no_grad():
@@ -130,6 +118,4 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
             X_opt = torch.where(cond, Z, X)
 
         t1 = model.predict(X_opt)
-        #print(f"Num pred<0 before: {len(pred_old[pred_old<0])}\tNum Pred<0 After: {len(t1[t1<0])}")
-        #print("Ending Best Response Computation")
         return X_opt

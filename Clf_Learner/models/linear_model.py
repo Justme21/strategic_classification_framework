@@ -68,24 +68,13 @@ class LinearModel(BaseModel, nn.Module):
                 l.backward()
                 opt.step()
                 train_losses[-1].append(l.item())
-                #if verbose:
-                #    print(f"batch {batch} / {len(train_loader)} | loss: {l.item()}")
                 batch += 1
-
-            #t1 = self.best_response(X, self, debug=True)
 
             print(f"End of Epoch: {epoch}: {self.get_weights()}")
             #TODO: Validation evaluation should go here
             
             t2 = time.time()
             if verbose:
-                t1 = self.best_response(X, self)
-                pred_X = self.predict(X)
-                pred_br = self.predict(t1)
-                dist = torch.pow(torch.sum(torch.pow(X-t1, 2), dim=1), 0.5)
-                max_dist = torch.max(dist)
-                import pdb
-                pdb.set_trace()
                 print(f"------------- epoch {epoch+1} / {epochs} | time: {t2-t1} sec | loss: {np.mean(train_losses[-1])}")
         
         if verbose:
