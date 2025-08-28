@@ -22,7 +22,6 @@ class BaseModel(ABC):
         return self.deterministic
 
     # Adding forward variants to handle the case where the forward function called in the best response (or the loss) might not be the standard forward
-    # TODO: If this is preserved then make forward internal facing (_forward)
     def forward_utility(self, X:Tensor) -> Tensor:
         return self.forward(X)
     
