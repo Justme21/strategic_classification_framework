@@ -4,6 +4,8 @@ from typing import cast
 
 from ..interfaces import BaseUtility, BaseModel
 
+SAFETY_THRESHOLD = 5e-1
+
 class AltStrategicUtility(torch.autograd.Function):
     @staticmethod
     def forward(ctx, model_out) -> Tensor:
@@ -16,7 +18,7 @@ class AltStrategicUtility(torch.autograd.Function):
     def backward(ctx, grad_out):
         (model_out, ) = ctx.saved_tensors
 
-        mask = (model_out<=0).float()
+        mask = (model_out<=SAFETY_THRESHOLD).float()
 
         grad_input = grad_out * mask
         return grad_input
