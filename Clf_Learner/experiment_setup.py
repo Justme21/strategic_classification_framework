@@ -59,7 +59,7 @@ def run_experiments(data_files:list, model_spec_names:list, best_response_name:s
             if verbose:
                 print(f"Running Experiment: Dataset {filename}\n Model: {model_spec}")
         
-            model = get_model(model_spec=model_spec, init_args=init_args, comp_args=args)
+            model = get_model(model_spec=model_spec, init_args=init_args, comp_args=args, result_addr=exp_result_dir, dataset_filename=filename)
             
             if seed_val is not None:
                 _set_seed(seed_val)

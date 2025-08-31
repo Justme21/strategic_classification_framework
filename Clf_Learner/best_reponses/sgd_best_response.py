@@ -7,7 +7,7 @@ ZERO_THRESHOLD = 1e-3
 
 class SGDBestResponse(BaseBestResponse):
     """Use Stochastic Gradient Descent on the Agent objective to determine the best response z, for a given x, and a given function"""
-    def __init__(self, utility:BaseUtility, cost:BaseCost, radius=2, lr=1e-2, max_epochs=100, **kwargs):
+    def __init__(self, utility:BaseUtility, cost:BaseCost, lr=1e-2, max_epochs=100, **kwargs):
         assert cost is not None, "Error: SGD Best Response requires a valid cost function be specified"
         assert utility is not None, "Error: SGD Best Response requires a valid utility function be specified"
         self._cost = cost

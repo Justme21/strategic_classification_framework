@@ -2,7 +2,6 @@ import torch
 from torch import Tensor
 
 from ..interfaces import BaseLoss, BaseModel
-from ..tools.utils import RELU
 
 def _kl_divergence(mu:Tensor, log_sigma:Tensor):
     sigma = log_sigma.exp()

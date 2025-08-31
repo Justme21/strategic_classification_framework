@@ -14,13 +14,16 @@ def _get_model(model_name):
     return MODEL_DICT[model_name]
 
 class RandomisedModel(BaseModel, nn.Module):
-    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, x_dim:int, num_comps:int=3, model_name="linear", no_var=True, **kwargs):
-        BaseModel.__init__(self, best_response, loss, x_dim)
+    """Generic Randomised Model Classifier. Can take any other deterministic classifier as a base model and can use it to
+       learn a randomised variant of that classifier (where a randomised classifier samples model parameters from a learnt parameter distribution)"""
+    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, address:str, x_dim:int, num_comps:int=3, num_repeats:int=5, model_name="linear", no_var=True, **kwargs):
+        BaseModel.__init__(self, best_response, loss, address, x_dim)
         nn.Module.__init__(self)
         self.deterministic = False
         self.x_dim = x_dim
+        self.num_repeats = max(1, num_repeats) # Number of times each batch is iterated over (higher => better model stability)
 
-        self._model = _get_model(model_name)(best_response, loss, x_dim, is_primary=False, **kwargs)
+        self._model = _get_model(model_name)(best_response, loss, address, x_dim, is_primary=False, **kwargs)
         
         self.num_comps = num_comps
         self.tau = 1.0
@@ -38,23 +41,30 @@ class RandomisedModel(BaseModel, nn.Module):
         self.best_response = best_response
         self.loss = loss
 
-    #def get_mean(self) -> Tensor:
-    #    return self.mean
-    
-    #def get_log_std(self) -> Tensor:
-    #    return torch.zeros([self.num_comps, 1, self.x_dim])
-
     def get_weights(self, include_bias=True):
-        #weights = torch.cat((self.get_mean(), self.get_log_std()), dim=-1) # TODO: Decide what do to with stds here
-        #return weights
         return self.weights
 
     def set_weights(self):
         # Randomised model will never not be primary, so set_weights will never be called
-        pass
+        assert False, "Error: 'set_weights' should never be called for the Randomised Classifier"
 
     def get_mixture_probs(self) -> Tensor:
         return torch.softmax(self.mix_logits, dim=0)
+
+    def get_boundary_vals(self, X):
+        """(Optional) For the input 1-D X values, returns the y values that would lie
+            on the model decision boundary. This is only used for data visualisation (not included in repo)"""
+        boundary_coords = []
+        for i in range(self.num_comps):
+            weights = self.weights[i].unsqueeze(0)
+            self._model.set_weights(weights)
+
+            model_boundary = self._model.get_boundary_vals(X)
+            model_boundary = model_boundary
+
+            boundary_coords.append(model_boundary)
+
+        return boundary_coords
 
     def forward(self, X):
         batch_size = X.size(0)
@@ -93,7 +103,10 @@ class RandomisedModel(BaseModel, nn.Module):
             train_losses.append([])
             for X, y in train_loader:                    
                 opt.zero_grad()
+                # TODO: Specifiy number of repeats here. So loop over each batch a few times to get a better gradient
                 l = self.loss(self, X, y)
+                for _ in range(self.num_repeats-1):
+                    l += self.loss(self, X, y)
                 l.backward()
                 opt.step()
                 train_losses[-1].append(l.item())
@@ -101,6 +114,7 @@ class RandomisedModel(BaseModel, nn.Module):
             #TODO: Validation evaluation should go here
             
             t2 = time.time()
+            self.save_params()
             if verbose:
                 probs = torch.softmax(self.get_mixture_probs(), dim=0)
                 print(f"Mix Weights: {probs}\n Weights: {self.weights}")
@@ -110,10 +124,3 @@ class RandomisedModel(BaseModel, nn.Module):
             print(f"Total training time: {time.time()-total_time} seconds")
 
         return {'train_losses': train_losses}
-    
-
-    def save_params(self, address):
-        torch.save(self.state_dict(), f"{address}/model_params")
- 
-    def load_params(self, address):
-        self.load_state_dict(torch.load(f"{address}/model_params", weights_only=True))

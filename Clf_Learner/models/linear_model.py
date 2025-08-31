@@ -5,11 +5,13 @@ import torch.nn as nn
 
 from torch.utils.data import DataLoader
 
+from ..tools.model_training_tools import vanilla_training_loop
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
 
 class LinearModel(BaseModel, nn.Module):
-    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, x_dim:int, is_primary:bool=True, **kwargs):
-        BaseModel.__init__(self, best_response, loss, x_dim, is_primary)
+    """Standard linear model"""
+    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, address:str, x_dim:int, is_primary:bool=True, **kwargs):
+        BaseModel.__init__(self, best_response, loss, address, x_dim, is_primary)
         nn.Module.__init__(self)
         self.x_dim = x_dim
         if self.is_primary():
@@ -19,28 +21,27 @@ class LinearModel(BaseModel, nn.Module):
             self.weight = torch.randn(1, x_dim)
             self.bias = torch.randn(1)
 
-        #self.fc = nn.Linear(x_dim, 1, bias=True)
-
         self.best_response = best_response
         self.loss = loss
 
     def get_boundary_vals(self, X):
         """(Optional) For the input 1-D X values, returns the y values that would lie
             on the model decision boundary. This is only used for data visualisation (not included in repo)"""
-        #W = self.fc.weight[0]
-        #b = self.fc.bias
-        W = self.weight
-        b = self.bias
+        if not self.is_primary():
+            # Weights still include batch term
+            W = self.weight.squeeze(0)[0]
+            b = self.bias.squeeze(0)
+        else:
+            W = self.weight[0]
+            b = self.bias
 
         y = (-W[0]*X-b)*(1.0/W[1]) 
         boundary_coords = torch.stack([X,y], dim=1)
         return boundary_coords
 
     def get_weights(self, include_bias=True) -> torch.Tensor:
-        #weights = self.fc.weight
         weights = self.weight
         if include_bias:
-            #bias = self.fc.bias.unsqueeze(0)
             bias = self.bias.unsqueeze(0)
             weights = torch.cat((weights, bias), dim=1)
         
@@ -52,62 +53,25 @@ class LinearModel(BaseModel, nn.Module):
         # Weight setting here means individual model cannot be called, and should only be called through primary model
         # When weights are set here the resulting weight tensors will have a specific batch dimension that isn't in standard def
 
-        self.weight = weight_tensor[:,:,:self.x_dim]
-        self.bias = weight_tensor[:,:,self.x_dim:].squeeze() # squeeze here to match conventional 1-D tensor definition
+        self.weight = weight_tensor[:,:,:self.x_dim] # <batch_size> x 1 x x_dim
+        self.bias = weight_tensor[:,:,self.x_dim:].squeeze(1) # squeeze here to match conventional 1-D tensor definition <batch_size> x 1
 
     def forward(self, X):
         # Flatten to make output uni-dimensional to match y
         # unsqueeze to ensure model output has the same dimensionality as non-deterministic model
 
-        #return torch.flatten(self.fc(X))
         if self.is_primary():
-            out = torch.einsum("bi, oi->bo", X, self.weight).squeeze() + self.bias
+            out = torch.einsum("bi, oi->bo", X, self.weight) + self.bias
         else:
-            out = torch.einsum("bi, boi->bo", X, self.weight).squeeze() + self.bias
+            out = torch.einsum("bi, boi->bo", X, self.weight) + self.bias
 
-        return out
+        return out.squeeze()
 
     def predict(self, X):
         y_hat = self.forward(X)
         y_hat[torch.abs(y_hat) <= 1e-10] = 0 # This is a dangerous stopgap, we later map negatives to 0.
         return torch.sign(y_hat)
 
-    def fit(self, train_dset:BaseDataset, opt, lr, batch_size=128, epochs=100, verbose=False):
-        # Put Data into a DataLoader
-        train_loader = DataLoader(train_dset, batch_size=batch_size, shuffle=False)
-        
-        # Initialise Optimiser
-        opt = opt(self.parameters(), lr=lr)
-
-        # Training Loop
-        total_time = time.time()
-        train_losses = []
-        for epoch in range(epochs):
-            t1 = time.time()
-            batch = 1
-            train_losses.append([])
-            for X, y in train_loader:
-                opt.zero_grad()
-                l = self.loss(self, X, y)
-                l.backward()
-                opt.step()
-                train_losses[-1].append(l.item())
-                batch += 1
-
-            print(f"End of Epoch: {epoch}: {self.get_weights()}")
-            #TODO: Validation evaluation should go here
-            
-            t2 = time.time()
-            if verbose:
-                print(f"------------- epoch {epoch+1} / {epochs} | time: {t2-t1} sec | loss: {np.mean(train_losses[-1])}")
-        
-        if verbose:
-            print(f"Total training time: {time.time()-total_time} seconds")
-
-        return {'train_losses': train_losses}
-
-    def save_params(self, address):
-        torch.save(self.state_dict(), f"{address}/model_params")
- 
-    def load_params(self, address):
-        self.load_state_dict(torch.load(f"{address}/model_params", weights_only=True))
+    def fit(self, train_dset:BaseDataset, opt, lr:float, batch_size:int=128, epochs:int=100, verbose:bool=False) -> dict:
+        train_losses_dict = vanilla_training_loop(self, train_dset, opt, lr, batch_size, epochs, verbose)
+        return train_losses_dict

@@ -118,10 +118,3 @@ class IteratedRandomisedLinearDeltaModel(BaseModel, nn.Module):
             print(f"Total training time: {time.time()-total_time} seconds")
 
         return {'train_losses': train_losses}
-    
-
-    def save_params(self, address):
-        torch.save(self.state_dict(), f"{address}/model_params")
- 
-    def load_params(self, address):
-        self.load_state_dict(torch.load(f"{address}/model_params", weights_only=True))
