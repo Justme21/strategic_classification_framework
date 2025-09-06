@@ -20,6 +20,12 @@ class BaseModel(ABC):
         self.deterministic: bool=True # whether it's a deterministic model or a randomised model
         self._is_primary: bool=is_primary
 
+    def get_num_components(self) -> int:
+        return 1
+
+    def get_mixture_probs(self) -> Tensor:
+        return torch.tensor(1.0)
+
     # Adding 'is_deterministic' because randomised classifiers will have functions deterministic ones won't
     def is_deterministic(self) -> bool:
         """Return whether or not the model is deterministic. Affects primarily behaviour in the loss function"""
@@ -31,7 +37,7 @@ class BaseModel(ABC):
         return self._is_primary
 
     # Adding forward variants to handle the case where the forward function called in the best response (or the loss) might not be the standard forward
-    def forward_utility(self, X:Tensor) -> Tensor:
+    def forward_utility(self, X:Tensor, i:int|None=None) -> Tensor:
         """Version of the forward function that is called in the utility definition. By default this is just forward"""
         return self.forward(X)
     

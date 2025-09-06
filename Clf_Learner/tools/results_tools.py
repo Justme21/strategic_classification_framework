@@ -34,8 +34,12 @@ def fetch_model(model:BaseModel, results_dirname:str, dataset_filename:str, mode
     model.load_params(dir_addr)
     return model
 
-def store_results(results:dict, results_dirname:str, dataset_filename:str, model_spec:dict):
+def store_results(results:dict, results_dirname:str, dataset_filename:str, model_spec:dict, verbose:bool):
     dir_addr = get_results_directory(results_dirname, dataset_filename, model_spec)
 
-    with open(f"{dir_addr}/results.json", 'w') as f:
+    results_dir = f"{dir_addr}/results.json" 
+    with open(results_dir, 'w') as f:
         json.dump(results, f, indent=4)
+    
+    if verbose:
+        print(f"Results successsfully saved to: {results_dir}\n")

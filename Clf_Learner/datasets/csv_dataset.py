@@ -32,7 +32,7 @@ def _check_cols(df, target_col, strat_cols):
 class CSVDataset(TensorDataset):
     # TODO: Most likely each dataset will require it's own loader, as opposed to
     # each filetype. Come back to it later.
-    def __init__(self, csv_file:str, target_col:int|str, strat_cols:list[int|str]|None=None):
+    def __init__(self, csv_file:str, target_col:int|str, verbose:bool, strat_cols:list[int|str]|None=None):
         assert csv_file.endswith('.csv')
         if csv_file.startswith('/'):
             #Catching the case where you pass a non-local file

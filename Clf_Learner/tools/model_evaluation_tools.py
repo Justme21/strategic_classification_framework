@@ -11,6 +11,16 @@ def _evaluate_dataset(X,y):
     num_pos, num_neg = _get_ratio(y)
     return {"size": size, "pos:neg": f"{num_pos}:{num_neg} ({num_pos/size})"}
 
+def _evaluate_model(model):
+    details = {}
+    if hasattr(model, "num_comps"):
+        details["num_comps"] = model.num_comps
+    if hasattr(model, "get_mixture_probs"):
+        details["mixture_probs"] = model.get_mixture_probs().detach().tolist()
+
+    details["weights"] = model.get_weights().detach().tolist()
+    return details
+
 def _calc_accuracy(label1, label2):
     return len(label1[label1==label2])*1.0/len(label1)
 
@@ -47,6 +57,7 @@ def evaluate_model(model:BaseModel, dataset:BaseDataset):
     X, y = dataset.get_all_vals()
 
     results['data stats'] = _evaluate_dataset(X, y)
+    results['model details'] = _evaluate_model(model)
     results['accuracy'] = _evaluate_accuracy(model, X, y)
 
     return results

@@ -41,7 +41,7 @@ class ParabolicModel(BaseModel, nn.Module):
         B = -2*torch.abs(self.coef)*(X*c - self.offset[:,0])*s - c
         C = -self.offset[:,1] + torch.abs(self.coef)*(X*c - self.offset[:,0])**2 - X*s
 
-        if A>0:
+        if A > 1e-6:
             discriminant = B**2 - 4*A*C
             re_discr = discriminant[discriminant>=0] # Omit imaginary solutions
             sqrt_discr = torch.sqrt(re_discr)
@@ -59,7 +59,7 @@ class ParabolicModel(BaseModel, nn.Module):
         else:
             # Angle is either 0 or pi, either way y=x^2
             assert self.coef!=0, "Error: Can't produce visualisation; model scaling coefficient is 0"
-            y = torch.abs(self.coef)*(X**2)
+            y = (1/c)*(torch.abs(self.coef)*((X*c - self.offset[:,0])**2 )- self.offset[:,1])
             boundary_coords = torch.stack([X, y], dim=1)
 
         return boundary_coords

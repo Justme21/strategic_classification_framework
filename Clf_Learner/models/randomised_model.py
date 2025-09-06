@@ -16,12 +16,11 @@ def _get_model(model_name):
 class RandomisedModel(BaseModel, nn.Module):
     """Generic Randomised Model Classifier. Can take any other deterministic classifier as a base model and can use it to
        learn a randomised variant of that classifier (where a randomised classifier samples model parameters from a learnt parameter distribution)"""
-    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, address:str, x_dim:int, num_comps:int=3, num_repeats:int=5, model_name="linear", no_var=True, **kwargs):
+    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, address:str, x_dim:int, num_comps:int=3, model_name="linear", no_var=True, **kwargs):
         BaseModel.__init__(self, best_response, loss, address, x_dim)
         nn.Module.__init__(self)
         self.deterministic = False
         self.x_dim = x_dim
-        self.num_repeats = max(1, num_repeats) # Number of times each batch is iterated over (higher => better model stability)
 
         self._model = _get_model(model_name)(best_response, loss, address, x_dim, is_primary=False, **kwargs)
         
@@ -40,6 +39,9 @@ class RandomisedModel(BaseModel, nn.Module):
 
         self.best_response = best_response
         self.loss = loss
+
+    def get_num_components(self):
+        return self.num_comps
 
     def get_weights(self, include_bias=True):
         return self.weights
@@ -79,6 +81,18 @@ class RandomisedModel(BaseModel, nn.Module):
         out = self._model.forward(X)
         return out
 
+    def forward_utility(self, X:Tensor, comp_id=None) -> Tensor:
+        if comp_id is None:
+            out = self.forward(X)
+        else:
+            batch_size = X.size(0)
+            weight = self.weights[comp_id]
+            weights = weight.repeat([batch_size] + [1 for _ in range(len(weight.shape))])
+
+            self._model.set_weights(weights)
+            out = self._model.forward(X)
+        return out
+
     def predict(self, X):
         # TODO: Probably want "num_samples" as an argument here so that you can specify how many weight samples you want to use to
         # evaluate the expected value over the model
@@ -105,9 +119,7 @@ class RandomisedModel(BaseModel, nn.Module):
                 opt.zero_grad()
                 # TODO: Specifiy number of repeats here. So loop over each batch a few times to get a better gradient
                 l = self.loss(self, X, y)
-                for _ in range(self.num_repeats-1):
-                    l += self.loss(self, X, y)
-                l.backward()
+                l.backward(inputs=[self.weights, self.mix_logits])
                 opt.step()
                 train_losses[-1].append(l.item())
 
@@ -116,7 +128,7 @@ class RandomisedModel(BaseModel, nn.Module):
             t2 = time.time()
             self.save_params()
             if verbose:
-                probs = torch.softmax(self.get_mixture_probs(), dim=0)
+                probs = self.get_mixture_probs()
                 print(f"Mix Weights: {probs}\n Weights: {self.weights}")
                 print(f"------------- epoch {epoch+1} / {epochs} | time: {t2-t1} sec | loss: {np.mean(train_losses[-1])}")
         
