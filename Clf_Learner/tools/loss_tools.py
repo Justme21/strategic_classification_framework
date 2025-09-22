@@ -28,12 +28,11 @@ def _get_implicit_grad(Z_star: Tensor, X: Tensor, y:Tensor, loss_fn, model: Base
     U = objective(Z_star, X, model)
     grad_u_z = torch.autograd.grad(U.sum(), Z_star, create_graph=True)[0]
 
-    #for i in range(B):
-    def _compute_correction(Z_row, X_row, grad_u_z_row, grad_l_z_row):
-        #Z_row = Z_star[i].unsqueeze(0) # Want a 1 x x_dim tensor. Could also unsqueeze()
-        #X_row = X[i].unsqueeze(0)
-        #grad_u_z_row = grad_u_z[i].unsqueeze(0) # 1 x D_z
-        #grad_l_z_row = grad_l_z[i].unsqueeze(-1)
+    for i in range(B):
+        Z_row = Z_star[i].unsqueeze(0) # Want a 1 x x_dim tensor. Could also unsqueeze()
+        X_row = X[i].unsqueeze(0)
+        grad_u_z_row = grad_u_z[i].unsqueeze(0) # 1 x D_z
+        grad_l_z_row = grad_l_z[i].unsqueeze(-1)
 
         # Hessian
         # We can exploit the fact that the z's are independent of each other, so the Hessian should be block diagonal
@@ -47,15 +46,10 @@ def _get_implicit_grad(Z_star: Tensor, X: Tensor, y:Tensor, loss_fn, model: Base
         s = torch.dot(v.squeeze(), grad_u_z_row.squeeze()).sum() # scalar
         grad_s_theta = torch.autograd.grad(s, theta, retain_graph=True, allow_unused=True)
 
-        return grad_s_theta
-        #for j, g in enumerate(grad_s_theta):
-        #    if g is not None:
-        #        correction_per_param[j] += g.detach()
+        for j, g in enumerate(grad_s_theta):
+            if g is not None:
+                correction_per_param[j] += g.detach()
 
-    batch_grad = torch.vmap(_compute_correction)(Z_star, X, grad_u_z, grad_l_z)
-
-    import pdb
-    pdb.set_trace()
     correction_flat = torch.cat([c.reshape(-1) for c in correction_per_param])
 
     # Final Gradient: grad_l_theta - correction
@@ -79,7 +73,7 @@ class ImplicitDifferentiationLossWrapper(BaseLoss):
         dl_dtheta_flat = _get_implicit_grad(Z_star, X, y, self.loss, model) # 1D tensor
 
         # Params can be 2+ dimensional. We just want a vector of all the parameters
-        params = [p for p in model.parameters() if p.requires_grad]
+        params = [p for p in model.parameters() if p.requires_grad] # TODO: Replace parameters with get_weights() here
         theta_flat = torch.cat([p.reshape(-1) for p in params])
 
         # Then we detach both from the computation graph and recombine them depending on model params
