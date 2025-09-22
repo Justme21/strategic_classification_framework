@@ -1,10 +1,6 @@
 import math
-import numpy as np
-import time
 import torch
 import torch.nn as nn
-
-from torch.utils.data import DataLoader
 
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
 from ..tools.model_training_tools import vanilla_training_loop
@@ -19,7 +15,7 @@ class ParabolicModel(BaseModel, nn.Module):
 
         if self.is_primary():
             # Model is the primary model being trained, so model weights will be optimised by optimiser
-            self.angle = nn.Parameter(2*math.pi*torch.rand(1)) # Angle the classifier is rotated by
+            self.angle = nn.Parameter(2*torch.pi*torch.rand(1)) # Angle the classifier is rotated by
             self.coef = nn.Parameter(torch.tensor([1.0])) # Scales the with of the classifier
             self.offset = nn.Parameter(torch.rand([1,2])) # Moves the turning point of the classifier along x- and y- axes
         else:

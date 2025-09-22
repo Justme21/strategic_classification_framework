@@ -26,7 +26,7 @@ class IteratedRandomisedModel(BaseModel, nn.Module):
         self.tau = 1.0
         self.gumbel_hard = True
 
-        self._comp_index = 0
+        self._comp_index = None
         self.mix_logits = torch.zeros(num_comps) # Mixing distribution
 
         weights = self._model.get_weights() # weights are out_dim (1) x num_weights vector
@@ -36,9 +36,13 @@ class IteratedRandomisedModel(BaseModel, nn.Module):
         self.loss = loss
 
     def get_num_components(self):
-        # comp_index is the index of the component currently being trained.
-        # At this point in training there are only that many components
-        return self._comp_index + 1
+
+        if self._comp_index is None:
+            return self.num_comps
+        else:
+            # comp_index is the index of the component currently being trained.
+            # At this point in training there are only that many components
+            return self._comp_index + 1
     
     def get_weights(self, include_bias=True):
         return self.weights

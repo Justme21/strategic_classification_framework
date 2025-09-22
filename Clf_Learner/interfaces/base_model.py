@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from .base_loss import BaseLoss
 
 class BaseModel(ABC):
-    @abstractmethod
     def __init__(self, best_response:'BaseBestResponse', loss:'BaseLoss', address:str, x_dim:int|None=None, is_primary:bool=True):
         # These are defined here so that the type-hinting is consistent
         self.address: str = address

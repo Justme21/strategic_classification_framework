@@ -9,10 +9,7 @@ ZERO_DUAL_THRESHOLD = 1e-3
 class AugmentedLagrangianBestResponse(BaseBestResponse):
     """ Computing the Best Response by treating the objective as a constrained minimization problem for the cost"""
     def __init__(self, utility:BaseUtility, cost:BaseCost, lr=1e-2, max_epochs=5, steps_per_epoch=100, mu_init=50.0, mu_mult=1.1, **kwargs):
-        assert cost is not None, "Error: Feasibility Best Response requires a valid cost function be specified"
-        assert utility is not None, "Error: Feasibility Best Response requires a valid utility function be specified"
-        self._cost = cost
-        self._utility = utility
+        BaseBestResponse.__init__(self, utility, cost)
 
         self.max_epochs = max_epochs
         self.steps_per_epoch = steps_per_epoch
@@ -48,15 +45,11 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
         return L
 
     def __call__(self, X:torch.Tensor, model:BaseModel, debug=False) ->torch.Tensor:
-        #print("Starting Best Response Computation")
         Z = X.detach().clone().requires_grad_()
 
-        #print(f"Model Weights here are: {model.get_weights(include_bias=True)}")
         c1 = self._benefit_constraint_func(X, model)
-        #print(f"Initial Benefit Constraint Violations: {c1.mean().item()}")
         pred_old = model.predict(X).detach()
         cond1 = pred_old<0
-        #print(f"Initial number of negative classifications: {cond1.sum()}")
 
         # Lagrangian coefficients for each constraint
         lam_init = 100 #NOTE: This parameter affects the magnitude of parameter changes in each step
