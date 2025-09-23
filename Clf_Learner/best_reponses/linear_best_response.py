@@ -1,11 +1,17 @@
 import torch
 
+from Clf_Learner.interfaces.base_model import BaseModel
+
 from ..interfaces import BaseBestResponse
 
 class LinearBestResponse(BaseBestResponse):
     """The best response to a Linear Model has a closed form solution that can be evaluated exactly"""
     def __init__(self, utility, cost, radius=2, **kwargs):
         self.radius = radius # The degree to which an input can be strategically perturbed
+
+    def objective(self, Z: torch.Tensor, X: torch.Tensor, model: BaseModel) -> torch.Tensor:
+        # Linear Best Response is discontinuous so doesn't have a meaningful gradient
+        return torch.zeros_like(Z)
 
     def __call__(self, X, model):
         W = model.get_weights(include_bias=False) # Omit bias term when computing distance

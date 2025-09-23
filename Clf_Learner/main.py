@@ -39,9 +39,10 @@ def _create_arg_parser():
 
     return parser.parse_args()
 
-def _make_results_dir(dirname):
+def _make_results_dir(dirname, to_train):
     dir_addr = f"{RESULTS_DIR}/{dirname}"
-    if os.path.exists(dir_addr):
+    if os.path.exists(dir_addr) and to_train:
+        # If the path exists and you are planning on training, then overwrite the old results
         shutil.rmtree(dir_addr)
     os.makedirs(dir_addr)
 
@@ -61,14 +62,15 @@ if __name__ == "__main__":
 
     if args.store:
         # Create new directory to store results
-        _make_results_dir(args.dirname)
+        _make_results_dir(args.dirname, args.train)
 
     if args.arg_file is not None:
         dirname = args.dirname
         args = _load_args(dirname)
         args.dirname = dirname
 
-    _save_args(args)
+    if args.store:
+        _save_args(args)
 
     if args.gpu:
         # Not sure if this is the best place to have this. 
@@ -78,5 +80,5 @@ if __name__ == "__main__":
         torch.set_default_device(device)
 
     run_experiments(data_files=args.datasets, model_spec_names=args.specs, best_response_name=args.best_response, cost_name=args.cost, loss_name=args.loss,\
-                     model_name=args.model, utility_name=args.utility, args=args.args, seed_val=args.seed, lr=args.lr, batch_size=args.batch, epochs=args.epochs,\
+                     model_name=args.model, utility_name=args.utility, comp_args=args.args, seed_val=args.seed, lr=args.lr, batch_size=args.batch, epochs=args.epochs,\
                         exp_result_dir=args.dirname, hist_result_dir=args.hist_result_dirname, train=args.train, test=args.test, store=args.store, verbose=args.verbose)

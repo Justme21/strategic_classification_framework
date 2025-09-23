@@ -4,7 +4,7 @@ from typing import cast
 
 from ..interfaces import BaseUtility, BaseModel
 
-class StrategicSigmoidUtility(BaseUtility):
+class StrategicTanhUtility(BaseUtility):
     def __init__(self, coef=1, alpha=7.5, **kwargs):
         self.coef = coef
         self.alpha = alpha
@@ -12,4 +12,4 @@ class StrategicSigmoidUtility(BaseUtility):
     def __call__(self, X:Tensor, model:'BaseModel') -> Tensor:
         model_out = model.forward(X)
 
-        return self.coef*(2*torch.sigmoid(self.alpha*model_out)-1)
+        return self.coef*torch.tanh(self.alpha*model_out)

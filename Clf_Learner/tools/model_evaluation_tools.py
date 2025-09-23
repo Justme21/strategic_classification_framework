@@ -11,12 +11,20 @@ def _evaluate_dataset(X,y):
     num_pos, num_neg = _get_ratio(y)
     return {"size": size, "pos:neg": f"{num_pos}:{num_neg} ({num_pos/size})"}
 
+def _evaluate_model(model):
+    details = {}
+    if hasattr(model, "num_comps"):
+        details["num_comps"] = model.num_comps
+    if hasattr(model, "get_mixture_probs"):
+        details["mixture_probs"] = model.get_mixture_probs().detach().tolist()
+
+    details["weights"] = model.get_weights().detach().tolist()
+    return details
+
 def _calc_accuracy(label1, label2):
     return len(label1[label1==label2])*1.0/len(label1)
 
-def _get_confusion_matrix(model, X, y):
-    pred = model.predict(X)
-
+def _get_confusion_matrix(y, pred):
     pred = torch.where(pred==-1, 0, 1) 
     y = torch.where(y==-1, 0, 1)
 
@@ -27,12 +35,19 @@ def _get_confusion_matrix(model, X, y):
 
     return {"TP": TP, "FP": FP, "FN": FN, "TN": TN}
 
-def _evaluate_accuracy(model, X, y, strat_X):
-    clean_accuracy = _calc_accuracy(y, model.predict(X))
-    strategic_accuracy = _calc_accuracy(y, model.predict(strat_X))
+def _evaluate_accuracy(model, X, y):
+    with torch.enable_grad():
+        # evaluate_model is done with grad disabled to freeze weights
+        strat_X = model.best_response(X, model)
 
-    clean_confusion = _get_confusion_matrix(model, X, y)
-    strat_confusion = _get_confusion_matrix(model, strat_X, y)
+        pred_X = model.predict(X)
+        pred_strat_X = model.predict(strat_X)
+
+    clean_accuracy = _calc_accuracy(y, pred_X)
+    strategic_accuracy = _calc_accuracy(y, pred_strat_X)
+
+    clean_confusion = _get_confusion_matrix(y, pred_X)
+    strat_confusion = _get_confusion_matrix(y, pred_strat_X)
 
     return {"clean_accuracy": clean_accuracy,"strategic_accuracy": strategic_accuracy, "clean_confusion": clean_confusion, "strategic_confusion": strat_confusion}
 
@@ -40,13 +55,10 @@ def evaluate_model(model:BaseModel, dataset:BaseDataset):
     results = {}
 
     X, y = dataset.get_all_vals()
-    with torch.enable_grad():
-        # evaluate_model is done with grad disabled to freeze weights
-        strat_X = model.best_response(X, model)
 
-    t1 = strat_X != X
     results['data stats'] = _evaluate_dataset(X, y)
-    results['accuracy'] = _evaluate_accuracy(model, X, y, strat_X)
+    results['model details'] = _evaluate_model(model)
+    results['accuracy'] = _evaluate_accuracy(model, X, y)
 
     return results
     
