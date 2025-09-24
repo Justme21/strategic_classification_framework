@@ -7,6 +7,7 @@ import torch
 
 from .best_reponses import BR_DICT
 from .costs import COST_DICT
+from .datasets import CSV_DATASET_DICT
 from .losses import LOSS_DICT
 from .models import MODEL_DICT
 from .utilities import UTILITY_DICT
@@ -18,7 +19,7 @@ def _create_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--arg_file", help="(Optional) Specify the json file that args can be read from", default=None)
     parser.add_argument("--dirname", help="The directory where the experiment results will be written to", default=f"{datetime.datetime.now():%Y-%m-%d_%H_%M}")
-    parser.add_argument("--datasets", help="Comma separated list of datasets experiments are to be run on", nargs='+', required=True)
+    parser.add_argument("--datasets", help=f"Comma separated list of datasets experiments are to be run on. Specify filename in data directory, or else select from : {','.join(CSV_DATASET_DICT.keys()) if CSV_DATASET_DICT.keys() else '<No Values Defined>'}", nargs='+', required=True)
     parser.add_argument("--specs", help="Comma separated list of model specs experiments are to be run on", nargs='*', default=None)
     parser.add_argument("--best_response", help=f"(Required if --arg_file or --specs not specified) Best Response method to use from : {','.join(BR_DICT.keys()) if BR_DICT.keys() else '<No Values Defined>'}", default=None)
     parser.add_argument("--cost",  help=f" (Required if required by specified model) Cost method to use from : {', '.join(COST_DICT.keys()) if COST_DICT.keys() else '<No Values Defined>'}", default=None)
