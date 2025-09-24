@@ -25,7 +25,7 @@ def _build_model_from_spec(model_spec, init_args, comp_args, result_addr, datase
     best_response = best_response(cost=cost, utility=utility, **init_args, **comp_args.get('best_response',{}))
     loss = loss(**init_args, **comp_args.get('loss', {}))
 
-    #loss = ImplicitDifferentiationLossWrapper(loss)
+    loss = ImplicitDifferentiationLossWrapper(loss)
 
     model_addr = get_results_directory(result_addr, dataset_filename, model_spec )
     model = model(best_response=best_response, loss=loss, address=model_addr, **init_args, **comp_args.get('model', {}))
