@@ -19,13 +19,17 @@ class LagrangianBestResponse(BaseBestResponse):
         self.opt = torch.optim.SGD
 
         self.lagrange_mult_init = 0.0
+        self.lagrange_mult = torch.Tensor([])
 
-    def _get_utility(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel, lagrange_mult:torch.Tensor) -> torch.Tensor:
+    def objective(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel, lagrange_mult:torch.Tensor|None=None) -> torch.Tensor:
         cost = self._cost(X,Z)
  
+        if lagrange_mult is None:
+            # This is a bit dodgy; during best_response optimisation it's as easy to just pass the lagrange multiplier as an argument
+            # But ImplicitDifferentiation can't pass lagrange multiplier as a parameter, so we store it as a self parameter.
+            lagrange_mult = self.lagrange_mult
+
         benefit_lagrange = -lagrange_mult*self._utility(Z, model)
-        #import pdb
-        #pdb.set_trace()
         
         L = cost + benefit_lagrange
         return L
@@ -47,7 +51,7 @@ class LagrangianBestResponse(BaseBestResponse):
             opt_z.zero_grad()
             opt_lagrange.zero_grad()
 
-            util = self._get_utility(Z, X, model, lagrange_mult)
+            util = self.objective(Z, X, model, lagrange_mult)
 
             l = util.sum()
 
@@ -81,6 +85,9 @@ class LagrangianBestResponse(BaseBestResponse):
                 # Store the converged Z value
                 Z_store = torch.cat([Z_store, Z.detach().clone().unsqueeze(0)], dim=0)
             X_store = X.detach().clone().unsqueeze(0).repeat([Z_store.shape[0]]+[1 for _ in range(len(X.shape))])
+
+        # Store Lagrange Multiplier
+        self.lagrange_mult = lagrange_mult.detach().clone()
 
         # Produce outputs
         with torch.no_grad():

@@ -19,8 +19,7 @@ class SGDBestResponse(BaseBestResponse):
         self.lr= lr
         self.opt = torch.optim.SGD
 
-    #def _objective(self, Z, X, model):
-    def _get_utility(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel) -> torch.Tensor:
+    def objective(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel) -> torch.Tensor:
         return self._utility(Z, model) - self._cost(X, Z)
 
     def __call__(self, X:torch.Tensor, model:BaseModel, debug=False, animate_rate=None) ->torch.Tensor:
@@ -36,15 +35,11 @@ class SGDBestResponse(BaseBestResponse):
         for t in range(self.max_iterations):
             opt.zero_grad()
             # To maximise the objective, we do gradient descent on the negative of the loss
-            #obj = self.objective(Z, X, model)
-            #obj = self._objective(Z, X, model)
-            util = self._get_utility(Z, X, model)
+            obj = self.objective(Z, X, model)
 
-            #l = -obj.sum()
-            l = util.sum()
+            l = -obj.sum()
 
             l.backward(inputs=[Z])
-            #l.backward()
 
             # NOTE: Doesn't entirely resolve instability in results
             # Decaying the learning rate to make the later iteration rounds less noisy

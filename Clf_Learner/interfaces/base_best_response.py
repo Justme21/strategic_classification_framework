@@ -15,12 +15,11 @@ class BaseBestResponse(ABC):
         self._cost = cost
         self._utility = utility
 
+    @abstractmethod
     def objective(self, Z:Tensor, X:Tensor, model:'BaseModel') -> Tensor:
         """Evaluate the best response objective"""
         # This is used to as part of ImplciitDifferentiation evaluation for the loss wrt best response
-        cost = self._cost(X, Z)
-        utility = self._utility(Z, model)
-        return (utility - cost)
+        raise NotImplementedError
 
     @abstractmethod
     def __call__(self, X:Tensor, model:'BaseModel') -> Tensor:
