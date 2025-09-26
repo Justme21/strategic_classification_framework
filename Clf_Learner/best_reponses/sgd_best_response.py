@@ -2,7 +2,7 @@ import torch
 
 from ..interfaces import BaseCost, BaseBestResponse, BaseModel, BaseUtility
 
-ZERO_THRESHOLD = 1e-1
+ZERO_THRESHOLD = 1e-2
 NO_IMPROVEMENT_THRESHOLD = 20
 
 class SGDBestResponse(BaseBestResponse):

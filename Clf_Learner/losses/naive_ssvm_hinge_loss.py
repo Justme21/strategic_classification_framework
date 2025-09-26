@@ -12,7 +12,7 @@ def _regularization_loss(model:BaseModel):
 def _hinge_loss(model:BaseModel, X:Tensor, y:Tensor, Z:Tensor):
     #Smart Strategic SVM version of the hinge loss
     acc_term = y*model.forward_loss(Z)
-    return torch.sum(F.relu(1-acc_term))
+    return torch.mean(F.relu(1-acc_term))
 
 class NaiveStrategicSVMHingeLoss(BaseLoss):
     # As defined in Generalised Strategic Classification
@@ -21,7 +21,7 @@ class NaiveStrategicSVMHingeLoss(BaseLoss):
     def __init__(self, gamma=0, **kwargs):
         self.reg_weight = gamma
 
-    def __call__(self, model:BaseModel, X:Tensor, y:Tensor, Z:Tensor|None):
+    def __call__(self, model:BaseModel, X:Tensor, y:Tensor, Z:Tensor|None=None):
         if Z is None:
             Z = model.best_response(X, model)
         loss = _hinge_loss(model, X, y, Z)

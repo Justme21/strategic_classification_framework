@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 from ..interfaces import BaseCost, BaseBestResponse, BaseModel, BaseUtility
 
-ZERO_THRESHOLD = 1e-1
+ZERO_THRESHOLD = 1e-4
 NO_IMPROVEMENT_THRESHOLD = 20
 
 class LagrangianBestResponse(BaseBestResponse):
@@ -21,7 +21,9 @@ class LagrangianBestResponse(BaseBestResponse):
         self.lagrange_mult_init = 0.0
         self.lagrange_mult = torch.Tensor([])
 
-    def objective(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel, lagrange_mult:torch.Tensor|None=None) -> torch.Tensor:
+        self.lagrange_mult_cost = torch.Tensor([])
+
+    def objective(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel, lagrange_mult:torch.Tensor|None=None, lagrange_mult_cost:torch.Tensor|None=None) -> torch.Tensor:
         cost = self._cost(X,Z)
  
         if lagrange_mult is None:
@@ -29,21 +31,34 @@ class LagrangianBestResponse(BaseBestResponse):
             # But ImplicitDifferentiation can't pass lagrange multiplier as a parameter, so we store it as a self parameter.
             lagrange_mult = self.lagrange_mult
 
+        if lagrange_mult_cost is None:
+            # This is a bit dodgy; during best_response optimisation it's as easy to just pass the lagrange multiplier as an argument
+            # But ImplicitDifferentiation can't pass lagrange multiplier as a parameter, so we store it as a self parameter.
+            lagrange_mult_cost = self.lagrange_mult_cost
+
+        # Constraint 1: utility(Z,model) > 0 
         benefit_lagrange = -lagrange_mult*self._utility(Z, model)
         
-        L = cost + benefit_lagrange
+        # Constraint 2: cost(X,Z) < 2 → g2(Z) = cost(X,Z) - 2 ≤ 0
+        penalty_cost = lagrange_mult_cost * (cost - 2)
+
+        #L = cost + benefit_lagrange
+        L = cost + benefit_lagrange + penalty_cost
         return L
 
     def __call__(self, X:torch.Tensor, model:BaseModel, debug=False, animate_rate=None) ->torch.Tensor:
         Z = X.detach().clone().requires_grad_()
         lagrange_mult = torch.Tensor([self.lagrange_mult_init for _ in range(len(X))]).requires_grad_()
+        lagrange_mult_cost = torch.Tensor([self.lagrange_mult_init for _ in range(len(X))]).requires_grad_()
+
 
         if animate_rate is not None:
             assert isinstance(animate_rate, int)
             Z_store = X.detach().clone().unsqueeze(0)
 
         opt_z = self.opt([Z], self.lr)
-        opt_lagrange = self.opt([lagrange_mult], 0.01*self.lr, maximize=True)
+        #opt_lagrange = self.opt([lagrange_mult], 0.01*self.lr, maximize=True)
+        opt_lagrange = self.opt([lagrange_mult, lagrange_mult_cost], 0.01*self.lr, maximize=True)
 
         l_old_val = None
         no_improvement_count = 0
@@ -51,17 +66,20 @@ class LagrangianBestResponse(BaseBestResponse):
             opt_z.zero_grad()
             opt_lagrange.zero_grad()
 
-            util = self.objective(Z, X, model, lagrange_mult)
+            #util = self.objective(Z, X, model, lagrange_mult)
+            util = self.objective(Z, X, model, lagrange_mult, lagrange_mult_cost)
 
             l = util.sum()
 
-            l.backward(inputs=[Z, lagrange_mult])
+            #l.backward(inputs=[Z, lagrange_mult])
+            l.backward(inputs=[Z, lagrange_mult, lagrange_mult_cost])
 
             opt_z.step()
 
             opt_lagrange.step()
 
             lagrange_mult.clamp(min=0)
+            lagrange_mult_cost.clamp(min=0)
 
             if animate_rate is not None and t%animate_rate==0:
                 Z_store = torch.cat([Z_store, Z.detach().clone().unsqueeze(0)], dim=0)
@@ -88,6 +106,7 @@ class LagrangianBestResponse(BaseBestResponse):
 
         # Store Lagrange Multiplier
         self.lagrange_mult = lagrange_mult.detach().clone()
+        self.lagrange_mult_cost = lagrange_mult_cost.detach().clone()
 
         # Produce outputs
         with torch.no_grad():

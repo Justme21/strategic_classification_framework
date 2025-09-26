@@ -105,6 +105,26 @@ def _solve_Hv_eq_b(Z_row, objective_fn, X_row, model, b, tol=1e-5, max_iter=10):
 
     return v
 
+def _approx_inverse_hvp(dloss_val_dparams, dloss_train_dparams, params):
+        p = v = dloss_val_dparams
+
+        for _ in range(3):
+            grad = torch.autograd.grad(
+                    dloss_train_dparams,
+                    params,
+                    grad_outputs=v,
+                    retain_graph=True,
+                    allow_unused=True
+                )
+            import pdb
+            pdb.set_trace()
+            grad = [g * 0.1 for g in grad]  
+
+            v = [curr_v - curr_g for (curr_v, curr_g) in zip(v, grad)]
+            p = [curr_p + curr_v for (curr_p, curr_v) in zip(p, v)]
+
+        return list(pp for pp in p)
+
 def _get_implicit_grad_hvp(Z_star: Tensor, X: Tensor, y:Tensor, loss_fn, model: BaseModel):
     """Compute the implicit gradient using Hessian Vector Product and Conjugate Gradient"""
     
@@ -135,12 +155,14 @@ def _get_implicit_grad_hvp(Z_star: Tensor, X: Tensor, y:Tensor, loss_fn, model: 
     
         # Hessian
         # Use Hessian Vector Product (hvp) here so as not to have to compute the hessian explicitly
+        # v = grad_l_z_row*H^{-1}
         v = _solve_Hv_eq_b(Z_row, objective, X_row, model, b=grad_l_z_row) # D_z x 1
-        s = torch.dot(v.squeeze(), grad_u_z_row.squeeze()).sum() # scalar
-    
-        grad_s_theta = torch.autograd.grad(s, theta, retain_graph=True, allow_unused=True)
-    
-        for j, g in enumerate(grad_s_theta):
+        
+        # Compute (\partial-l/\partial-z_row)*H^{-1}*(\partial^{2}U/\partial-z\partial-theta)
+        v_detached = v.detach() # Detaching v so gradient isn't computed through when computing grad_s_theta
+        v_times_grad_u_z_row_theta = torch.autograd.grad(grad_u_z_row, theta, grad_outputs=v_detached, retain_graph=True, allow_unused=True)
+        
+        for j, g in enumerate(v_times_grad_u_z_row_theta):
             if g is not None:
                 correction_per_param[j] += g.detach()
 
@@ -157,6 +179,14 @@ class ImplicitDifferentiationLossWrapper(BaseLoss):
         self.loss = loss
 
     def __call__(self, model:BaseModel, X:Tensor, y:Tensor) -> Tensor:
+        #####################################
+        # TODO: Remove this. This is Temporary
+        #weights = [torch.tensor([-10.0, 10.0]).unsqueeze(0), torch.tensor([5.0])]
+        #params = [p for p in model.parameters()]
+        #for i in range(len(params)):
+        #    params[i].data = weights[i]
+        ######################################
+
         # First we compute the loss
         Z_star = model.best_response(X, model)
         Z_star = Z_star.clone().detach().requires_grad_()
