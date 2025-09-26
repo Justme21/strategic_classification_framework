@@ -145,7 +145,7 @@ def _get_implicit_grad_hvp(Z_star: Tensor, X: Tensor, y:Tensor, loss_fn, model: 
     # Utility Gradients
     objective = model.best_response.objective
     U = objective(Z_star, X, model)
-    grad_u_z = torch.autograd.grad(U.sum(), Z_star, create_graph=True)[0]
+    grad_u_z = torch.autograd.grad(U.mean(), Z_star, create_graph=True)[0]
 
     for i in range(B):
         Z_row = Z_star[i].unsqueeze(0) # Want a 1 x x_dim tensor. Could also unsqueeze()
