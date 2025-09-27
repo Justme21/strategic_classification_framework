@@ -9,7 +9,7 @@ from ..models import MODEL_DICT
 from ..utilities import UTILITY_DICT
 
 
-def _build_model_from_spec(model_spec, init_args, comp_args, result_addr, dataset_filename):
+def _build_model_from_spec(model_spec, init_args, comp_args, result_addr, dataset_filename, implicit):
     # A model might not require a cost or a utility. 
     # By assumption ever model should require a best response
     cost = COST_DICT.get(model_spec['cost'])
@@ -25,15 +25,16 @@ def _build_model_from_spec(model_spec, init_args, comp_args, result_addr, datase
     best_response = best_response(cost=cost, utility=utility, **init_args, **comp_args.get('best_response',{}))
     loss = loss(**init_args, **comp_args.get('loss', {}))
 
-    loss = ImplicitDifferentiationLossWrapper(loss)
+    if implicit:
+        loss = ImplicitDifferentiationLossWrapper(loss)
 
     model_addr = get_results_directory(result_addr, dataset_filename, model_spec )
     model = model(best_response=best_response, loss=loss, address=model_addr, **init_args, **comp_args.get('model', {}))
 
     return model
 
-def get_model(model_spec, result_addr, dataset_filename, init_args={}, comp_args={}):
-    model = _build_model_from_spec(model_spec, init_args, comp_args, result_addr, dataset_filename)
+def get_model(model_spec, result_addr, dataset_filename, implicit, init_args={}, comp_args={}):
+    model = _build_model_from_spec(model_spec, init_args, comp_args, result_addr, dataset_filename, implicit)
 
     return model
 

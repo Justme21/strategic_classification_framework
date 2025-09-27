@@ -26,6 +26,7 @@ def _create_arg_parser():
     parser.add_argument("--loss",  help=f"(Required if --arg_file or --specs not specified) Loss method to use from : {', '.join(LOSS_DICT.keys()) if LOSS_DICT.keys() else '<No Values Defined>'}", default=None)
     parser.add_argument("--model",  help=f"(Required if --arg_file or --specs not specified) Model to use from : {', '.join(MODEL_DICT.keys()) if MODEL_DICT.keys() else '<No Values Defined>'}", default=None)
     parser.add_argument("--utility", help=f"(Required if required by specified model) Utility method to use from : {', '.join(UTILITY_DICT.keys()) if UTILITY_DICT.keys() else '<No Values Defined>'}", default=None)
+    parser.add_argument("--implicit", help="Use Implicit Gradient as part of training", action='store_true')
     parser.add_argument("--lr", help="Specify the learning rate to be used during training", type=float, default=1e-2)
     parser.add_argument("--batch", help="Specify the batch size to be used during training", type=int, default=128)
     parser.add_argument("--epochs", help="Specify the number of batches to be performed during training", type=int, default=100)
@@ -82,4 +83,4 @@ if __name__ == "__main__":
 
     run_experiments(data_files=args.datasets, model_spec_names=args.specs, best_response_name=args.best_response, cost_name=args.cost, loss_name=args.loss,\
                      model_name=args.model, utility_name=args.utility, comp_args=args.args, seed_val=args.seed, lr=args.lr, batch_size=args.batch, epochs=args.epochs,\
-                        exp_result_dir=args.dirname, hist_result_dir=args.hist_result_dirname, train=args.train, test=args.test, store=args.store, verbose=args.verbose)
+                        exp_result_dir=args.dirname, hist_result_dir=args.hist_result_dirname, implicit=args.implicit, train=args.train, test=args.test, store=args.store, verbose=args.verbose)

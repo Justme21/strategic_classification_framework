@@ -46,7 +46,7 @@ class LagrangianBestResponse(BaseBestResponse):
         L = cost + benefit_lagrange + penalty_cost
         return L
 
-    def __call__(self, X:torch.Tensor, model:BaseModel, debug=False, animate_rate=None) ->torch.Tensor:
+    def __call__(self, X:torch.Tensor, model:BaseModel, debug=False, animate_rate=None, y=None) ->torch.Tensor:
         Z = X.detach().clone().requires_grad_()
         lagrange_mult = torch.Tensor([self.lagrange_mult_init for _ in range(len(X))]).requires_grad_()
         lagrange_mult_cost = torch.Tensor([self.lagrange_mult_init for _ in range(len(X))]).requires_grad_()
@@ -114,9 +114,13 @@ class LagrangianBestResponse(BaseBestResponse):
             cost = self._cost(X,Z)
             cond1 = cost<2
 
-            util_X = self._utility(X, model)
-            util_Z = self._utility(Z, model)
-            cond2 = util_Z>util_X
+            #util_X = self._utility(X, model)
+            #util_Z = self._utility(Z, model)
+            #cond2 = util_Z>util_X
+
+            pred_X = model.predict(X)
+            pred_Z = model.predict(Z)
+            cond2 = pred_Z>pred_X
 
             cond=cond1*cond2
             #cond = cond2

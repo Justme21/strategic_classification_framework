@@ -39,7 +39,7 @@ def _run_experiment(dataset:BaseDataset, model:BaseModel, lr:float, batch_size:i
     return results
 
 def run_experiments(data_files:list, model_spec_names:list, best_response_name:str, cost_name:str, loss_name:str, model_name:str, utility_name:str, comp_args:dict,\
-                    seed_val:int, lr:float, batch_size:int, epochs:int, exp_result_dir:str, hist_result_dir:str, train:bool, test:bool, store:bool, verbose:bool):
+                    seed_val:int, lr:float, batch_size:int, epochs:int, exp_result_dir:str, hist_result_dir:str, implicit:bool, train:bool, test:bool, store:bool, verbose:bool):
 
     assert train or hist_result_dir, "Error: Either you must train a new model from scratch, or you must specify a historic directory to load model from"
     if model_spec_names is not None:
@@ -64,7 +64,7 @@ def run_experiments(data_files:list, model_spec_names:list, best_response_name:s
             if verbose:
                 print(f"Running Experiment: Dataset {filename}\n Model: {model_spec}")
         
-            model = get_model(model_spec=model_spec, init_args=init_args, comp_args=comp_args, result_addr=exp_result_dir, dataset_filename=filename)
+            model = get_model(model_spec=model_spec, init_args=init_args, comp_args=comp_args, result_addr=exp_result_dir, dataset_filename=filename, implicit=implicit)
             
             if seed_val is not None:
                 _set_seed(seed_val)
