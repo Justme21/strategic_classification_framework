@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 
-from ..interfaces import BaseLoss, BaseModel
+from ..interfaces import BaseDataset, BaseLoss, BaseModel
 
 def _regularization_loss(model:BaseModel):
     W = model.get_weights()

@@ -12,8 +12,6 @@ from .tools.results_tools import fetch_model, store_model, store_results
 # Electing to use a default optimiser for all experiments. Choice of optimiser is outside the scope of this application
 EXP_OPT = torch.optim.Adam
 
-
-
 def _set_seed(seed_val):
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
@@ -64,7 +62,7 @@ def run_experiments(data_files:list, model_spec_names:list, best_response_name:s
             if verbose:
                 print(f"Running Experiment: Dataset {filename}\n Model: {model_spec}")
         
-            model = get_model(model_spec=model_spec, init_args=init_args, comp_args=comp_args, result_addr=exp_result_dir, dataset_filename=filename, implicit=implicit)
+            model = get_model(model_spec=model_spec, init_args=init_args, comp_args=comp_args, result_addr=exp_result_dir, dataset=dataset, implicit=implicit)
             
             if seed_val is not None:
                 _set_seed(seed_val)

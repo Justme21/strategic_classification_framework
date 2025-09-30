@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
-from ..tools.model_training_tools import vanilla_training_loop
+from .model_training_tools import vanilla_training_loop
 
 class ParabolicModel(BaseModel, nn.Module):
     """Parabolic Classifier of the form: f(x) = x[1] - a(x[0]-b)^2 + c"""

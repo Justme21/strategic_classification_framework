@@ -57,7 +57,7 @@ class CSVDataset(TensorDataset):
         X = torch.tensor(X_df.values, dtype=torch.float32)
         y = torch.tensor(y_df.values, dtype=torch.float32).squeeze()
 
-        super().__init__(X=X, y=y)
+        super().__init__(X=X, y=y, filename=csv_file)
 
     def __len__(self) -> int:
         return super().__len__()
@@ -70,3 +70,11 @@ class CSVDataset(TensorDataset):
 
     def get_all_vals(self):
         return super().get_all_vals()
+
+    def invert_standardistion(self, X: torch.Tensor) -> torch.Tensor:
+        import pdb
+        pdb.set_trace()
+        if self._standardiser:
+            return self._standardiser.inverse_transform(X)
+        else:
+            return X

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from ..tools.model_training_tools import vanilla_training_loop
+from .model_training_tools import vanilla_training_loop
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
 
 class LinearModel(BaseModel, nn.Module):

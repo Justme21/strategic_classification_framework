@@ -6,7 +6,7 @@ from .lagrangian_best_response import LagrangianBestResponse
 from .lagrangian_best_response_alt import AltLagrangianBestResponse
 from .linear_best_response import LinearBestResponse
 from .optimiser_best_response import OptimiserBestResponse
-from .sgd_best_response import SGDBestResponse
+from .gradient_ascent_best_response import GradientAscentBestResponse
 
 BR_DICT: dict[str, type[BaseBestResponse]] = {
     #"alt_lagrange": AltLagrangianBestResponse,
@@ -15,5 +15,5 @@ BR_DICT: dict[str, type[BaseBestResponse]] = {
     "lagrange": LagrangianBestResponse,
     "linear": LinearBestResponse,
     #"optimiser": OptimiserBestResponse,
-    "sgd": SGDBestResponse,
+    "projected_grad": GradientAscentBestResponse,
 }

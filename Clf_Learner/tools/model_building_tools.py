@@ -1,4 +1,4 @@
-from .loss_tools import ImplicitDifferentiationLossWrapper
+from ..losses.loss_tools import ImplicitDifferentiationLossWrapper
 from .specs import SPEC_DICT
 from .results_tools import get_results_directory
 
@@ -8,8 +8,10 @@ from ..losses import LOSS_DICT
 from ..models import MODEL_DICT
 from ..utilities import UTILITY_DICT
 
+from ..interfaces import BaseDataset
 
-def _build_model_from_spec(model_spec, init_args, comp_args, result_addr, dataset_filename, implicit):
+
+def _build_model_from_spec(model_spec:dict, init_args:dict, comp_args:dict, result_addr:str, dataset:BaseDataset, implicit:bool):
     # A model might not require a cost or a utility. 
     # By assumption ever model should require a best response
     cost = COST_DICT.get(model_spec['cost'])
@@ -20,6 +22,7 @@ def _build_model_from_spec(model_spec, init_args, comp_args, result_addr, datase
 
     if cost is not None:
         cost = cost(**init_args, **comp_args.get('cost', {}))
+        cost.set_standardisation_inverter(dataset.invert_standardisation)
     if utility is not None:
         utility = utility(**init_args, **comp_args.get('utility', {}))
     best_response = best_response(cost=cost, utility=utility, **init_args, **comp_args.get('best_response',{}))
@@ -28,13 +31,13 @@ def _build_model_from_spec(model_spec, init_args, comp_args, result_addr, datase
     if implicit:
         loss = ImplicitDifferentiationLossWrapper(loss)
 
-    model_addr = get_results_directory(result_addr, dataset_filename, model_spec )
+    model_addr = get_results_directory(result_addr, dataset.filename, model_spec )
     model = model(best_response=best_response, loss=loss, address=model_addr, **init_args, **comp_args.get('model', {}))
 
     return model
 
-def get_model(model_spec, result_addr, dataset_filename, implicit, init_args={}, comp_args={}):
-    model = _build_model_from_spec(model_spec, init_args, comp_args, result_addr, dataset_filename, implicit)
+def get_model(model_spec, result_addr, dataset, implicit, init_args={}, comp_args={}):
+    model = _build_model_from_spec(model_spec=model_spec, init_args=init_args, comp_args=comp_args, result_addr=result_addr, dataset=dataset, implicit=implicit)
 
     return model
 

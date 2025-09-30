@@ -4,11 +4,14 @@ import time
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from ..interfaces import BaseModel, BaseDataset
+from ..tools.device_tools import get_device
+
+DEVICE = get_device()
 
 def vanilla_training_loop(model:BaseModel, train_dset:BaseDataset, opt, lr, batch_size, epochs, verbose) -> dict[str, list]:
     """The base training loop that is common to most models"""
     # Put Data into a DataLoader
-    train_loader = DataLoader(train_dset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_dset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=4)
     
     # Initialise Optimiser
     assert isinstance(model, Module), "Error: `vanilla_training_loop` can only be used for torch-based models"
@@ -22,6 +25,7 @@ def vanilla_training_loop(model:BaseModel, train_dset:BaseDataset, opt, lr, batc
         batch = 1
         train_losses.append([])
         for X, y in train_loader:
+            X, y = X.to(DEVICE), y.to(DEVICE)
             opt.zero_grad()
             l = model.loss(model, X, y)
             l.backward()

@@ -8,7 +8,7 @@ ZERO_DUAL_THRESHOLD = 1e-3
 
 class AugmentedLagrangianBestResponse(BaseBestResponse):
     """ Computing the Best Response by treating the objective as a constrained minimization problem for the cost"""
-    def __init__(self, utility:BaseUtility, cost:BaseCost, lr=1e-2, max_epochs=5, steps_per_epoch=100, mu_init=50.0, mu_mult=1.1, **kwargs):
+    def __init__(self, utility:BaseUtility, cost:BaseCost, lr=1e-2, max_epochs=5, steps_per_epoch=100, mu_init=1.0, mu_mult=1.1, **kwargs):
         BaseBestResponse.__init__(self, utility, cost)
 
         self.max_epochs = max_epochs
@@ -20,16 +20,16 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
         self.mu_mult = mu_mult # Multiplier for the constraint weight term
 
     def _benefit_constraint_func(self, Z, model):
-        # Non-zero if utility(Z)<0
-        return F.relu(-self._utility(Z, model))
+        # >0 if utility(Z)<0
+        return -self._utility(Z, model)
 
     def _feasibility_constraint_func(self, cost, X, model):
-        # Non-zero if cost>1-f(x)
+        # >0 if cost>1-f(x)
         f_x = model.predict(X).detach()
         feasibility_obj = (1.0-f_x).detach()
-        return F.relu(cost - feasibility_obj)
+        return cost - feasibility_obj
 
-    def _get_utility(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel, lam1:torch.Tensor, lam2: torch.Tensor, mu:float) -> torch.Tensor:
+    def objective(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel, lam1:torch.Tensor, lam2: torch.Tensor, mu:float) -> torch.Tensor:
         cost = self._cost(X,Z)
  
         benefit_constraint = self._benefit_constraint_func(Z, model)
@@ -52,7 +52,7 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
         cond1 = pred_old<0
 
         # Lagrangian coefficients for each constraint
-        lam_init = 100 #NOTE: This parameter affects the magnitude of parameter changes in each step
+        lam_init = 0.1 #NOTE: This parameter affects the magnitude of parameter changes in each step
         lam1 = lam_init * torch.ones((len(X)))
         lam2 = lam_init * torch.ones((len(X)))
 
@@ -65,12 +65,13 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
             # Primal Optimisation
             for _ in range(self.steps_per_epoch):
                 opt.zero_grad()
-                util = self._get_utility(Z, X, model, lam1, lam2, mu)
+                util = self.objective(Z, X, model, lam1, lam2, mu)
 
-                l = (cond1*util).mean()
+                l = util.mean()
                 l.backward(inputs=[Z])
                 opt.step()
 
+                print(f"L: {l.item()}")
                 max_grad = torch.max(torch.abs(Z.grad)) if Z.grad is not None else 0
                 if max_grad<ZERO_PRIMAL_THRESHOLD:
                     # Consider it converged
@@ -96,6 +97,8 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
                 # Increase penalty parameter to exert more constraint pressure on next iteration
                 mu *= self.mu_mult
 
+                print(f"Lam1: {lam1.mean()}\tLam2: {lam2.mean()}\t Mu: {mu}")
+
         # Produce outputs
         with torch.no_grad():
             # Only realise changes when all conditions satisfied, otherwise keep old X
@@ -104,7 +107,7 @@ class AugmentedLagrangianBestResponse(BaseBestResponse):
             cost = self._cost(X,Z)
             cond3 = self._feasibility_constraint_func(cost, X, model)==0
 
-            cond=cond1*cond2*cond3
+            cond = cond2*cond3
             cond = cond.repeat(X.size(1), 1).T
             #cond = cond.unsqueeze(1).expand(-1, X.size(1)) <- clearer?
 
