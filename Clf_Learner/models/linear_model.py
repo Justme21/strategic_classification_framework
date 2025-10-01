@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from .model_training_tools import vanilla_training_loop
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
+from .model_training_tools import vanilla_training_loop
 
 class LinearModel(BaseModel, nn.Module):
     """Standard linear model"""
@@ -68,6 +68,6 @@ class LinearModel(BaseModel, nn.Module):
         y_hat[torch.abs(y_hat) <= 1e-10] = 0 # This is a dangerous stopgap, we later map negatives to 0.
         return torch.sign(y_hat)
 
-    def fit(self, train_dset:BaseDataset, opt, lr:float, batch_size:int=128, epochs:int=100, verbose:bool=False) -> dict:
-        train_losses_dict = vanilla_training_loop(self, train_dset, opt, lr, batch_size, epochs, verbose)
+    def fit(self, train_dset:BaseDataset, opt, lr:float, batch_size:int=128, epochs:int=100, validate:bool=False, verbose:bool=False) -> dict:
+        train_losses_dict = vanilla_training_loop(self, train_dset, opt, lr, batch_size, epochs, validate, verbose)
         return train_losses_dict

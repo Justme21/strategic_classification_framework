@@ -20,6 +20,10 @@ class Standardiser:
         """Revert standardization back to original space."""
         return X_scaled * self.std + self.mean
 
+    def to(self, device):
+        self.mean = self.mean.to(device)
+        self.std = self.std.to(device)
+
 def get_standardiser(X: torch.Tensor) -> Standardiser:
     standardiser = Standardiser(X)
     return standardiser

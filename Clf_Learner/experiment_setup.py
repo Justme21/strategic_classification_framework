@@ -16,13 +16,12 @@ def _set_seed(seed_val):
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
 
-def _run_experiment(dataset:BaseDataset, model:BaseModel, lr:float, batch_size:int, epochs: int, train:bool, test:bool, verbose:bool):
+def _run_experiment(dataset:BaseDataset, model:BaseModel, lr:float, batch_size:int, epochs: int, train:bool, validate:bool, test:bool, verbose:bool):
     results = {}
     # If training new model, pass to train
     if train:
         # TODO: Want to store training losses and validation losses (if/when validation is being run) and output them here 
-        train_results = model.fit(dataset, opt=EXP_OPT, lr=lr, batch_size=batch_size, epochs=epochs, verbose=verbose)
-        results['train'] = train_results
+        results = model.fit(dataset, opt=EXP_OPT, lr=lr, batch_size=batch_size, epochs=epochs, validate=validate, verbose=verbose)
 
     # If eval, load model and pass to eval
     if test:
@@ -37,7 +36,7 @@ def _run_experiment(dataset:BaseDataset, model:BaseModel, lr:float, batch_size:i
     return results
 
 def run_experiments(data_files:list, model_spec_names:list, best_response_name:str, cost_name:str, loss_name:str, model_name:str, utility_name:str, comp_args:dict,\
-                    seed_val:int, lr:float, batch_size:int, epochs:int, exp_result_dir:str, hist_result_dir:str, implicit:bool, train:bool, test:bool, store:bool, verbose:bool):
+                    seed_val:int, lr:float, batch_size:int, epochs:int, exp_result_dir:str, hist_result_dir:str, implicit:bool, train:bool, validate:bool, test:bool, store:bool, verbose:bool):
 
     assert train or hist_result_dir, "Error: Either you must train a new model from scratch, or you must specify a historic directory to load model from"
     if model_spec_names is not None:
@@ -71,7 +70,7 @@ def run_experiments(data_files:list, model_spec_names:list, best_response_name:s
                 # Load model state from historical data
                 model = fetch_model(model, hist_result_dir, filename, model_spec)
 
-            results = _run_experiment(dataset, model, lr, batch_size, epochs, train, test, verbose)
+            results = _run_experiment(dataset, model, lr, batch_size, epochs, train, validate, test, verbose)
     
             # Store results and return
             if store:

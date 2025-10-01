@@ -54,8 +54,10 @@ class CSVDataset(TensorDataset):
         X_df = _get_columns(data_df, strat_cols)
         y_df = _get_columns(data_df, [target_col])
         
-        X = torch.tensor(X_df.values, dtype=torch.float32)
-        y = torch.tensor(y_df.values, dtype=torch.float32).squeeze()
+        # Don't want these tensors to be on GPU if that is default device. 
+        # Put onto device in training loop instead
+        X = torch.tensor(X_df.values, dtype=torch.float32, device="cpu")
+        y = torch.tensor(y_df.values, dtype=torch.float32, device="cpu").squeeze()
 
         super().__init__(X=X, y=y, filename=csv_file)
 
@@ -70,11 +72,3 @@ class CSVDataset(TensorDataset):
 
     def get_all_vals(self):
         return super().get_all_vals()
-
-    def invert_standardistion(self, X: torch.Tensor) -> torch.Tensor:
-        import pdb
-        pdb.set_trace()
-        if self._standardiser:
-            return self._standardiser.inverse_transform(X)
-        else:
-            return X

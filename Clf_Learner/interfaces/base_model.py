@@ -69,6 +69,10 @@ class BaseModel(ABC):
             address = self.address
         self.load_state_dict(torch.load(f"{address}/model_params", weights_only=True))
 
+    def to(self, device:str) -> None:
+        for w in self.get_weights():
+            w.to(device)
+
     @abstractmethod
     def get_weights(self, include_bias:bool=True) -> Tensor:
         """Return the model weights
@@ -83,7 +87,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def fit(self, dataset:'BaseDataset', opt, lr:float, batch_size:int, epochs:int, verbose:bool) -> dict:
+    def fit(self, dataset:'BaseDataset', opt, lr:float, batch_size:int, epochs:int, validate:bool, verbose:bool) -> dict:
         """ Learn to predict the true y values associated with the given Xs
         : X: Data to learn from
         : y: True values

@@ -10,6 +10,10 @@ from ..utilities import UTILITY_DICT
 
 from ..interfaces import BaseDataset
 
+from ..tools.device_tools import get_device
+
+DEVICE = get_device()
+
 
 def _build_model_from_spec(model_spec:dict, init_args:dict, comp_args:dict, result_addr:str, dataset:BaseDataset, implicit:bool):
     # A model might not require a cost or a utility. 
@@ -38,6 +42,7 @@ def _build_model_from_spec(model_spec:dict, init_args:dict, comp_args:dict, resu
 
 def get_model(model_spec, result_addr, dataset, implicit, init_args={}, comp_args={}):
     model = _build_model_from_spec(model_spec=model_spec, init_args=init_args, comp_args=comp_args, result_addr=result_addr, dataset=dataset, implicit=implicit)
+    model.to(DEVICE)
 
     return model
 

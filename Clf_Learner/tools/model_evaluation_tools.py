@@ -1,6 +1,7 @@
 import torch
 
 from ..interfaces import BaseDataset, BaseModel
+from .device_tools import get_device
 
 def _get_ratio(y):
     # Assumes y in {-1, 1}
@@ -56,9 +57,21 @@ def evaluate_model(model:BaseModel, dataset:BaseDataset):
 
     X, y = dataset.get_all_vals()
 
+    device = get_device()
+    X, y = X.to(device), y.to(device)
+
     results['data stats'] = _evaluate_dataset(X, y)
     results['model details'] = _evaluate_model(model)
     results['accuracy'] = _evaluate_accuracy(model, X, y)
 
     return results
+
+def validate_model(model:BaseModel, dataset:BaseDataset):
+
+    X, y = dataset.get_all_vals()
+
+    device = get_device()
+    X, y = X.to(device), y.to(device)
     
+    accuracy_metrics =  _evaluate_accuracy(model, X, y)
+    return accuracy_metrics['clean_accuracy'], accuracy_metrics['strategic_accuracy']

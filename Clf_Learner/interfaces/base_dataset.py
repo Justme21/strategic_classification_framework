@@ -26,5 +26,9 @@ class BaseDataset(Dataset):
         pass
 
     @abstractmethod
+    def set_standardiser_device(self, device:str)->None:
+        pass
+
+    @abstractmethod
     def invert_standardisation(self, X:Tensor) -> Tensor:
         pass

@@ -1,7 +1,9 @@
 import torch
-import torch.nn.functional as F
 
 from ..interfaces import BaseCost, BaseBestResponse, BaseModel, BaseUtility
+from ..tools.device_tools import get_device
+
+
 
 ZERO_THRESHOLD = 1e-7
 NO_IMPROVEMENT_THRESHOLD = 100
@@ -20,9 +22,10 @@ class LagrangianBestResponse(BaseBestResponse):
         self.opt = torch.optim.Adam
 
         self.lagrange_mult_init = 0.0
-        self.lagrange_mult = torch.Tensor([])
 
-        self.lagrange_mult_cost = torch.Tensor([])
+        DEVICE = get_device()
+        self.lagrange_mult = torch.Tensor([]).to(DEVICE)
+        self.lagrange_mult_cost = torch.Tensor([]).to(DEVICE)
 
         self._t = 0 # Value only used for hyperparamter tuning
         self._margin = margin
@@ -54,11 +57,9 @@ class LagrangianBestResponse(BaseBestResponse):
 
     def __call__(self, X:torch.Tensor, model:BaseModel, debug=False, animate_rate=None, y=None) ->torch.Tensor:
         Z = X.detach().clone().requires_grad_()
-        #lagrange_mult = torch.Tensor([self.lagrange_mult_init for _ in range(len(X))]).requires_grad_()
-        #lagrange_mult_cost = torch.Tensor([self.lagrange_mult_init for _ in range(len(X))]).requires_grad_()
-        lagrange_mult = torch.Tensor([0.0 for _ in range(len(X))]).requires_grad_()
-        lagrange_mult_cost = torch.Tensor([0.0 for _ in range(len(X))]).requires_grad_()
 
+        lagrange_mult = torch.tensor([0.0 for _ in range(len(X))], device=X.device).requires_grad_()
+        lagrange_mult_cost = torch.tensor([0.0 for _ in range(len(X))], device=X.device).requires_grad_()
 
         if animate_rate is not None:
             assert isinstance(animate_rate, int)

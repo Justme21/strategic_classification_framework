@@ -36,6 +36,10 @@ class TensorDataset(BaseDataset, Dataset):
     def get_all_vals(self) -> tuple[Tensor, Tensor]:
         return self.X, self.y
     
+    def set_standardiser_device(self, device):
+        if self._standardiser:
+            self._standardiser.to(device)
+
     def invert_standardisation(self, X:Tensor) -> Tensor:
         if self._standardiser:
             return self._standardiser.inverse_transform(X)

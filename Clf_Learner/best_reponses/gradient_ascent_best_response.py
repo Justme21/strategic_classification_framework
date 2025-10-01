@@ -97,6 +97,5 @@ class GradientAscentBestResponse(BaseBestResponse):
                 X_opt = torch.where(cond, Z_store, X_store).clone()
             else:
                 X_opt = torch.where(cond, Z, X).clone()
-        #import pdb
-        #pdb.set_trace()
+
         return X_opt
