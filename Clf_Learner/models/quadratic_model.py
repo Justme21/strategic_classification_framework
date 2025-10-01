@@ -103,6 +103,6 @@ class QuadraticModel(BaseModel, nn.Module):
         self.w = weight_tensor[:, num_Q:num_Q+d]
         self.b = weight_tensor[:, num_Q+d]
 
-    def fit(self, train_dset:BaseDataset, opt, lr:float, batch_size:int=128, epochs:int=100, verbose:bool=False) -> dict:
-        train_losses_dict = vanilla_training_loop(self, train_dset, opt, lr, batch_size, epochs, verbose)
+    def fit(self, train_dset:BaseDataset, opt, lr:float, batch_size:int, epochs:int, validate:bool, verbose:bool=False) -> dict:
+        train_losses_dict = vanilla_training_loop(self, train_dset, opt, lr, batch_size, epochs, validate, verbose)
         return train_losses_dict

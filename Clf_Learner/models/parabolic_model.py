@@ -97,6 +97,6 @@ class ParabolicModel(BaseModel, nn.Module):
         y_hat[torch.abs(y_hat) <= 1e-10] = 0
         return torch.sign(y_hat)
 
-    def fit(self, train_dset:BaseDataset, opt, lr, batch_size=128, epochs=100, verbose=False):
-        train_losses_dict = vanilla_training_loop(self, train_dset, opt, lr, batch_size, epochs, verbose)
+    def fit(self, train_dset:BaseDataset, opt, lr:float, batch_size:int, epochs:int, validate:bool, verbose:bool=False):
+        train_losses_dict = vanilla_training_loop(self, train_dset, opt, lr, batch_size, epochs, validate, verbose)
         return train_losses_dict

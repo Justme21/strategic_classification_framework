@@ -8,6 +8,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
+from ..tools.model_evaluation_tools import validate_model
 
 def _get_model(model_name):
     from ..models import MODEL_DICT
@@ -102,7 +103,7 @@ class RandomisedModel(BaseModel, nn.Module):
 
         return torch.sign(y_hat) # Translate average prediction back into prediction
     
-    def fit(self, train_dset:BaseDataset, opt, lr, batch_size=128, epochs=100, verbose=False):
+    def fit(self, train_dset:BaseDataset, opt, lr:float, batch_size:int, epochs:int, validate:bool, verbose=False):
         # Put Data into a DataLoader
         train_loader = DataLoader(train_dset, batch_size=batch_size, shuffle=False)
         
@@ -112,6 +113,10 @@ class RandomisedModel(BaseModel, nn.Module):
         # Training Loop
         total_time = time.time()
         train_losses = []
+        if validate:
+            valid_clean_accuracies = []
+            valid_strat_accuracies = []
+
         for epoch in range(epochs):
             t1 = time.time()
             train_losses.append([])
@@ -124,15 +129,26 @@ class RandomisedModel(BaseModel, nn.Module):
                 train_losses[-1].append(l.item())
 
             #TODO: Validation evaluation should go here
-            
+            if validate:
+                with torch.no_grad():
+                    clean_accuracy, strat_accuracy = validate_model(self, train_dset)
+                    valid_clean_accuracies.append(clean_accuracy)
+                    valid_strat_accuracies.append(strat_accuracy)
+
             t2 = time.time()
             self.save_params()
             if verbose:
                 probs = self.get_mixture_probs()
                 print(f"Mix Weights: {probs}\n Weights: {self.weights}")
                 print(f"------------- epoch {epoch+1} / {epochs} | time: {t2-t1} sec | loss: {np.mean(train_losses[-1])}")
+                if validate:
+                    print(f"------------- validation: clean acc: {clean_accuracy} | strat acc: {strat_accuracy}")
         
         if verbose:
             print(f"Total training time: {time.time()-total_time} seconds")
 
-        return {'train_losses': train_losses}
+        out = {'train': {'train-loss': train_losses}}
+        if validate:
+            out['validation'] = {'valid-clean-acc': valid_clean_accuracies, 'valid-strat-acc': valid_strat_accuracies}
+
+        return out
