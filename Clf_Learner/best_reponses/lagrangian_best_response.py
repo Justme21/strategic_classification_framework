@@ -3,8 +3,6 @@ import torch
 from ..interfaces import BaseCost, BaseBestResponse, BaseModel, BaseUtility
 from ..tools.device_tools import get_device
 
-
-
 ZERO_THRESHOLD = 1e-7
 NO_IMPROVEMENT_THRESHOLD = 100
 
@@ -23,27 +21,20 @@ class LagrangianBestResponse(BaseBestResponse):
 
         self.lagrange_mult_init = 0.0
 
-        DEVICE = get_device()
-        self.lagrange_mult = torch.Tensor([]).to(DEVICE)
-        self.lagrange_mult_cost = torch.Tensor([]).to(DEVICE)
+        device = get_device()
+        self.lagrange_mult = torch.Tensor([]).to(device)
+        self.lagrange_mult_cost = torch.Tensor([]).to(device)
 
         self._t = 0 # Value only used for hyperparamter tuning
         self._margin = margin
         self._lagrange_mult_lr = lagrange_mult_lr
         self._lagrange_mult_cost_lr = lagrange_mult_cost_lr
 
-    def objective(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel, lagrange_mult:torch.Tensor|None=None, lagrange_mult_cost:torch.Tensor|None=None) -> torch.Tensor:
-        cost = self._cost(X,Z)
- 
-        if lagrange_mult is None:
-            # This is a bit dodgy; during best_response optimisation it's as easy to just pass the lagrange multiplier as an argument
-            # But ImplicitDifferentiation can't pass lagrange multiplier as a parameter, so we store it as a self parameter.
-            lagrange_mult = self.lagrange_mult
+    def objective(self, Z: torch.Tensor, X: torch.Tensor, model: BaseModel):
+        return self._objective_impl(Z, X, model, self.lagrange_mult, self.lagrange_mult_cost)
 
-        if lagrange_mult_cost is None:
-            # This is a bit dodgy; during best_response optimisation it's as easy to just pass the lagrange multiplier as an argument
-            # But ImplicitDifferentiation can't pass lagrange multiplier as a parameter, so we store it as a self parameter.
-            lagrange_mult_cost = self.lagrange_mult_cost
+    def _objective_impl(self, Z:torch.Tensor, X:torch.Tensor, model:BaseModel, lagrange_mult:torch.Tensor, lagrange_mult_cost:torch.Tensor) -> torch.Tensor:
+        cost = self._cost(X,Z)
 
         # Constraint 1: utility(Z,model) > 0 
         benefit_lagrange = -lagrange_mult*(self._utility(Z, model)-self._margin)
@@ -51,7 +42,6 @@ class LagrangianBestResponse(BaseBestResponse):
         # Constraint 2: cost(X,Z) < 2 → g2(Z) = cost(X,Z) - 2 ≤ 0
         penalty_cost = lagrange_mult_cost * (cost - 2)
 
-        #L = cost + benefit_lagrange
         L = cost + benefit_lagrange + penalty_cost
         return L
 
@@ -66,39 +56,59 @@ class LagrangianBestResponse(BaseBestResponse):
             Z_store = X.detach().clone().unsqueeze(0)
 
         opt_z = self.opt([Z], lr=self.lr) # Adam optimiser
-        #opt_z = self.opt([Z], lr=self.lr, betas=(0.9, 0.99), weight_decay=0.0) # Adam optimiser
-        #opt_lagrange = self.opt([lagrange_mult], 0.01*self.lr, maximize=True)
-        #opt_lagrange = self.opt([lagrange_mult, lagrange_mult_cost], 1e-2, maximize=True)
-        #opt_lagrange = self.opt([lagrange_mult], 1.0, maximize=True)
-        #opt_lagrange_cost = self.opt([lagrange_mult_cost], 1e-3, maximize=True)
-        opt_lagrange = torch.optim.Adam([lagrange_mult], self._lagrange_mult_lr)
-        opt_lagrange_cost = torch.optim.Adam([lagrange_mult_cost], self._lagrange_mult_cost_lr)
+        opt_lagrange = torch.optim.Adam([lagrange_mult], self._lagrange_mult_lr, maximize=True)
+        opt_lagrange_cost = torch.optim.Adam([lagrange_mult_cost], self._lagrange_mult_cost_lr, maximize=True)
 
         pred_x = model.predict(X)<0
         cost_old_val = None
         util_old_val = None
-        no_improvement_count = 0
+
+        #device = get_device()
+        #if device == 'mps':
+        #    # torch.compile not supported on MPS
+        #    obj_comp = torch.compile(self._objective_impl, backend='aot_eager')
+        #else:
+        #    obj_comp = torch.compile(self._objective_impl)
+
+        obj_comp = self._objective_impl
+
         for t in range(self.max_iterations):
+            # opt_z.zero_grad()
+
+            # #for g in opt_z.param_groups:
+            # #    g['lr'] = self.lr / (1 + 0.1*t)
+
+            # #util = self.objective(Z, X, model, lagrange_mult)
+            # #util = self.objective(Z, X, model, lagrange_mult, lagrange_mult_cost)
+            
+
+            # l_z = util.mean()
+            # l_z.backward(inputs=[Z], retain_graph=True)
+            # #torch.nn.utils.clip_grad_norm_([Z], max_norm=10.0) # Adam can cause gradient weirdness
+            # opt_z.step()
+
+            # opt_lagrange.zero_grad()
+            # opt_lagrange_cost.zero_grad()
+
+            # #l.backward(inputs=[Z, lagrange_mult])
+            # util = self.objective(Z, X, model, lagrange_mult, lagrange_mult_cost)
+            # l_lagrange = -util.mean()
+            # l_lagrange.backward(inputs=[lagrange_mult, lagrange_mult_cost], retain_graph=True)
+            # opt_lagrange.step()
+            # opt_lagrange_cost.step()
+
             opt_z.zero_grad()
-
-            #for g in opt_z.param_groups:
-            #    g['lr'] = self.lr / (1 + 0.1*t)
-
-            #util = self.objective(Z, X, model, lagrange_mult)
-            util = self.objective(Z, X, model, lagrange_mult, lagrange_mult_cost)
-
-            l_z = util.mean()
-            l_z.backward(inputs=[Z], retain_graph=True)
-            #torch.nn.utils.clip_grad_norm_([Z], max_norm=10.0) # Adam can cause gradient weirdness
-            opt_z.step()
-
             opt_lagrange.zero_grad()
             opt_lagrange_cost.zero_grad()
+            
+            util = obj_comp(Z, X, model, lagrange_mult, lagrange_mult_cost)
+            l = util.mean()
+            
+            l.backward(inputs=[Z, lagrange_mult, lagrange_mult_cost])
 
-            #l.backward(inputs=[Z, lagrange_mult])
-            util = self.objective(Z, X, model, lagrange_mult, lagrange_mult_cost)
-            l_lagrange = -util.mean()
-            l_lagrange.backward(inputs=[lagrange_mult, lagrange_mult_cost], retain_graph=True)
+            #lagrange_mult.grad = -lagrange_mult.grad
+            #lagrange_mult_cost.grad = -lagrange_mult_cost.grad
+            opt_z.step()
             opt_lagrange.step()
             opt_lagrange_cost.step()
 
