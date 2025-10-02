@@ -93,8 +93,8 @@ class LagrangianBestResponse(BaseBestResponse):
 
             # Only optimise the strategic features
             with torch.no_grad():
-                if X.grad is not None:
-                    X.grad *= strat_mask
+                if Z.grad is not None:
+                    Z.grad *= strat_mask
 
             opt_z.step()
             opt_lagrange.step()
@@ -178,4 +178,6 @@ class LagrangianBestResponse(BaseBestResponse):
                 X_opt = torch.where(cond, Z, X)
                 #X_opt = Z
 
+        import pdb
+        pdb.set_trace()
         return X_opt
