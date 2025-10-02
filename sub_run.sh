@@ -1,18 +1,27 @@
-python -m Clf_Learner.main --dirname results_holder \
---datasets ball_half_ring_dataset_ball_rad_2_in_rad_3_out_rad_5.csv \
---best_response projected_grad \
+Model=$1
+
+python -m Clf_Learner.main \
+--dirname real_dataset/exp_batch128_${Model} \
+--datasets credit_scoring_normalised_class_balanced.csv \
+--best_response lagrange \
 --cost quadratic \
 --loss naive_ssvm_hinge \
---model icnn \
---utility hinge \
+--model ${Model} \
+--utility strategic \
 --lr 0.01 \
---batch 2048 \
---epochs 20 \
+--batch 128 \
+--epochs 10 \
 --seed 0 \
+--validate \
 --train \
 --test \
 --store \
 --verbose \
---args '{"best_response": {"max_iterations": 500, "lr":0.01}, "cost": {"radius": 2.0}, "loss": {"gamma": 0},  "utility": {"margin": 0.01}}'
+--implicit \
+--gpu \
+--args '{"max_iterations": 20000, "lr":0.0007, "margin": 5e-2, "lagrange_mult_lr": 5e-2, "lagrange_mult_cost_lr": 1e-2}'
 
 #--model parabolic \
+
+
+#--dataset ball_half_ring_dataset_ball_rad_2_in_rad_3_out_rad_5.csv
