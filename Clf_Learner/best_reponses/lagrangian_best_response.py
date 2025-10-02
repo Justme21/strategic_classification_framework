@@ -15,6 +15,8 @@ class LagrangianBestResponse(BaseBestResponse):
         self._cost = cost
         self._utility = utility
 
+        self.strategic_columns = None
+
         self.max_iterations = max_iterations
         self.lr=lr
         self.opt = torch.optim.Adam

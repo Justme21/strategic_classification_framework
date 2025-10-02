@@ -45,7 +45,9 @@ class CSVDataset(TensorDataset):
 
         _check_cols(data_df, target_col, strat_cols)
         
-        non_target_cols = [x for x in data_df.columns if x!=target_col] 
+        # Numbered columns
+        data_columns = data_df.columns.to_list()
+        non_target_cols = [i for i, x in enumerate(data_columns) if x!=target_col] 
         
         X_df = _get_columns(data_df, non_target_cols)
         y_df = _get_columns(data_df, [target_col])
@@ -55,7 +57,15 @@ class CSVDataset(TensorDataset):
         X = torch.tensor(X_df.values, dtype=torch.float32, device="cpu")
         y = torch.tensor(y_df.values, dtype=torch.float32, device="cpu").squeeze()
 
-        self._strat_cols = strat_cols # The columns that have been identified as manipulable
+        self._strat_cols = None
+        if strat_cols:
+            if not isinstance(strat_cols[0], int):
+                assert all([x in data_columns for x in strat_cols])  
+                int_strat_cols = [data_columns.index(x) for x in strat_cols]
+            else:
+                int_strat_cols = strat_cols
+
+            self._strat_cols = int_strat_cols
 
         super().__init__(X=X, y=y, filename=csv_file)
 
