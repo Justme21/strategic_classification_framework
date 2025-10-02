@@ -12,7 +12,7 @@ class ICNNModel(BaseModel, nn.Module):
     """Input Convex Neural Network (ICNN) wrapper with same API as MLPModel."""
 
     def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, address:str, x_dim:int,
-                 hidden_layers:int=1, hidden_dim:int=16, icnn_type:str='ICNN',
+                 hidden_layers:int=1, hidden_dim:int=16, icnn_type:str='ICNN2',
                  symm_act_first:bool=False, softplus_type:str='softplus', zero_softplus:bool=False,
                  is_primary:bool=True, **kwargs):
         BaseModel.__init__(self, best_response, loss, address, x_dim, is_primary)
