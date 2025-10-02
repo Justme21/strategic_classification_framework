@@ -1,7 +1,7 @@
 Model=$1
 
 python -m Clf_Learner.main \
---dirname real_dataset/exp_batch128_${Model} \
+--dirname credit_exp_batch128_max_20/${Model} \
 --datasets credit_scoring_normalised_class_balanced.csv \
 --best_response lagrange \
 --cost quadratic \
@@ -10,7 +10,7 @@ python -m Clf_Learner.main \
 --utility strategic \
 --lr 0.01 \
 --batch 128 \
---epochs 10 \
+--epochs 20 \
 --seed 0 \
 --validate \
 --train \
