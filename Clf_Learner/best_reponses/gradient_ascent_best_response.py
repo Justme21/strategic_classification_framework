@@ -38,6 +38,11 @@ class GradientAscentBestResponse(BaseBestResponse):
 
             l.backward(inputs=[Z])
 
+            # Only optimise the strategic features
+            with torch.no_grad():
+                if Z.grad is not None:
+                    Z.grad *= strat_mask
+
             # NOTE: Doesn't entirely resolve instability in results
             # Decaying the learning rate to make the later iteration rounds less noisy
             #for param_group in opt.param_groups:
