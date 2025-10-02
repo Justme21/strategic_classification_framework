@@ -7,13 +7,16 @@ from ..interfaces import BaseBestResponse
 class LinearBestResponse(BaseBestResponse):
     """The best response to a Linear Model has a closed form solution that can be evaluated exactly"""
     def __init__(self, utility, cost, radius=2, **kwargs):
+
+        self.utility = utility
+        self.cost = cost
         self.radius = radius # The degree to which an input can be strategically perturbed
 
     def objective(self, Z: torch.Tensor, X: torch.Tensor, model: BaseModel) -> torch.Tensor:
         # Linear Best Response is discontinuous so doesn't have a meaningful gradient
-        return torch.zeros_like(Z)
+        return self.utility(Z, model) - self.cost(X, Z)
 
-    def __call__(self, X, model):
+    def __call__(self, X, model, **kwargs):
         W = model.get_weights(include_bias=False) # Omit bias term when computing distance
 
         # Compute magnitude and direction of movement orthogonal to decision boundary

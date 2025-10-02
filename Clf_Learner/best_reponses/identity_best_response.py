@@ -11,5 +11,5 @@ class IdentityResponse(BaseBestResponse):
     def objective(self, Z, X, model):
         return torch.ones_like(Z)
 
-    def __call__(self, X, model):
+    def __call__(self, X, model, y=None):
         return X
