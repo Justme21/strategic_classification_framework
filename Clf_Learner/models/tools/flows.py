@@ -9,10 +9,6 @@ from .made import MADE, CMADE
 from .naf import sigmoid_flow
 
 
-
-
-
-
 _scaling_min = 0.001
 
 
