@@ -20,12 +20,22 @@ class LinearBestResponse(BaseBestResponse):
         W = model.get_weights(include_bias=False) # Omit bias term when computing distance
 
         # Compute magnitude and direction of movement orthogonal to decision boundary
-        norm = torch.norm(W, p=2)
-        distances = model.forward(X).detach()/norm
-        X_moved = torch.cat([x - d*W/norm for x, d in zip(X, distances)], dim=0)
+        W_norm = torch.norm(W, p=2)
+        distances = model.forward(X).detach()/W_norm
+        X_moved = torch.cat([x - d*W/W_norm for x, d in zip(X, distances)], dim=0)
+
+        # Rescale to account for standardisation
+        scale = 1
+        standardiser = self.cost.get_standardiser()
+        if standardiser is not None:
+            sigma = standardiser.std
+            scaled_W_norm = torch.norm(W/sigma, p=2)
+            scale = scaled_W_norm/W_norm
         
         # Constraints applied to best responses
-        cond1 = -self.radius <= distances # Must be within radius of decision boundary
+        import pdb
+        pdb.set_trace()
+        cond1 = -self.radius*scale <= distances # Must be within radius of decision boundary
         cond2 = distances < 0 # Must be beneath decision boundary
         cond = cond1*cond2
 

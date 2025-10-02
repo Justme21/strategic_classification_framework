@@ -2,7 +2,7 @@ import torch
 
 from ..interfaces import BaseCost, BaseBestResponse, BaseModel, BaseUtility
 
-ZERO_THRESHOLD = 1e-3
+ZERO_THRESHOLD = 1e-7
 
 class GradientAscentBestResponse(BaseBestResponse):
     """Use Stochastic Gradient Descent on the Agent objective to determine the best response z, for a given x, and a given function"""

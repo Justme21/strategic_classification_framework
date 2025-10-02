@@ -30,5 +30,9 @@ class BaseDataset(Dataset):
         pass
 
     @abstractmethod
+    def get_standardiser(self):
+        pass
+
+    @abstractmethod
     def invert_standardisation(self, X:Tensor) -> Tensor:
         pass

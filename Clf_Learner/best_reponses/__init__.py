@@ -10,7 +10,7 @@ from .gradient_ascent_best_response import GradientAscentBestResponse
 
 BR_DICT: dict[str, type[BaseBestResponse]] = {
     #"alt_lagrange": AltLagrangianBestResponse,
-    "augmented_lagrange": AugmentedLagorangianBestResponse,
+    "augmented_lagrange": AugmentedLagrangianBestResponse,
     "gradient": GradientAscentBestResponse,
     "identity": IdentityResponse,
     "lagrange": LagrangianBestResponse,
