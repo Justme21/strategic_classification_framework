@@ -48,6 +48,9 @@ class ICNNModel(BaseModel, nn.Module):
         self.best_response = best_response
         self.loss = loss
 
+
+
+
     def get_boundary_vals(self, range_t: torch.Tensor, res:int=200):
         """
         Compute decision boundary (x,z) points where f(x,z)=0.
