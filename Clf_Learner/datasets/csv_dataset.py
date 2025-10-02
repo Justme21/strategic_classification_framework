@@ -47,8 +47,15 @@ class CSVDataset(TensorDataset):
         
         # Numbered columns
         data_columns = data_df.columns.to_list()
-        non_target_cols = [i for i, x in enumerate(data_columns) if x!=target_col] 
-        
+        if isinstance(target_col, str):
+            non_target_cols = [i for i, x in enumerate(data_columns) if x!=target_col] 
+        else:
+            non_target_cols = [i for i, _ in enumerate(data_columns) if i!=target_col] 
+ 
+
+        import pdb
+        pdb.set_trace()
+
         X_df = _get_columns(data_df, non_target_cols)
         y_df = _get_columns(data_df, [target_col])
         
