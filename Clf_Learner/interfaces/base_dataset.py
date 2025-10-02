@@ -9,9 +9,6 @@ class BaseDataset(Dataset):
         self.filename: str
         self.strategic_columns: list[int]
 
-        self.X
-        self.y
-
     @abstractmethod
     def __len__(self) -> int:
         pass
