@@ -62,10 +62,10 @@ class GradientAscentBestResponse(BaseBestResponse):
                 Z_store = torch.cat([Z_store, Z.detach().clone().unsqueeze(0)], dim=0)
 
             # Check for Convergence
-            grad = Z.grad.detach()
-            grad_norm = grad.norm(dim=1).mean().item()
-            if grad_norm < ZERO_THRESHOLD:   # e.g. 1e-4
-                break
+            #grad = Z.grad.detach()
+            #grad_norm = grad.norm(dim=1).mean().item()
+            #if grad_norm < ZERO_THRESHOLD:   # e.g. 1e-4
+            #    break
 
         # To do the where evaluation we need a X_store the same size as Z
         if animate_rate is not None:
