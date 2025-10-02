@@ -29,7 +29,9 @@ def _build_model_from_spec(model_spec:dict, init_args:dict, comp_args:dict, resu
         cost.set_standardiser(dataset.get_standardiser())
     if utility is not None:
         utility = utility(**init_args, **comp_args.get('utility', {}))
-    best_response = best_response(cost=cost, utility=utility, **init_args, **comp_args.get('best_response',{}))
+
+    strategic_columns = dataset.get_strategic_columns()
+    best_response = best_response(cost=cost, utility=utility, strategic_columns=strategic_columns, **init_args, **comp_args.get('best_response',{}))
     loss = loss(**init_args, **comp_args.get('loss', {}))
 
     if implicit:

@@ -59,10 +59,12 @@ def vanilla_training_loop(model:BaseModel, train_dset:BaseDataset, opt, lr:float
             if clean_accuracy>max_clean_acc:
                 max_clean_acc = clean_accuracy
                 no_improvement_count = 0
+                model.save_params()
 
             if strat_accuracy>max_strat_acc:
                 max_strat_acc = strat_accuracy
                 no_improvement_count = 0
+                model.save_params()
 
             if no_improvement_count>=grace_period:
                 if verbose:
@@ -70,7 +72,11 @@ def vanilla_training_loop(model:BaseModel, train_dset:BaseDataset, opt, lr:float
                 break
 
         t2 = time.time()
-        model.save_params() # Store intermediate parameter values
+
+        if validate:
+            # Don't overwrite models if we're doing validation and think we've already hit a best
+            model.save_params() # Store intermediate parameter values
+
         if verbose:
             print(f"End of Epoch: {epoch+1}: {model.get_weights()}")
             print(f"------------- epoch {epoch+1} / {epochs} | time: {t2-t1} sec | loss: {np.mean(train_losses[-1])}")

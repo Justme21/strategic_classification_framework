@@ -7,6 +7,7 @@ class BaseDataset(Dataset):
     @abstractmethod
     def __init__(self, X:Tensor, y:Tensor, source_file:str):
         self.filename: str
+        self.strategic_columns: list[int]
 
     @abstractmethod
     def __len__(self) -> int:
@@ -36,3 +37,8 @@ class BaseDataset(Dataset):
     @abstractmethod
     def invert_standardisation(self, X:Tensor) -> Tensor:
         pass
+
+    @abstractmethod
+    def get_strategic_columns(self) -> list[int]|None:
+        pass
+        

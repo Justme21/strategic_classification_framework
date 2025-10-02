@@ -8,12 +8,14 @@ NO_IMPROVEMENT_THRESHOLD = 100
 
 class LagrangianBestResponse(BaseBestResponse):
     """ Computing the Best Response by treating the objective as a constrained minimization problem for the cost"""
-    def __init__(self, utility:BaseUtility, cost:BaseCost, lr=1e-2, max_iterations=10, margin=1e-3,\
+    def __init__(self, utility:BaseUtility, cost:BaseCost, strategic_columns=None, lr=1e-2, max_iterations=10, margin=1e-3,\
                  lagrange_mult_lr=1e-4, lagrange_mult_cost_lr=1e-3, **kwargs):
         assert cost is not None, "Error: Feasibility Best Response requires a valid cost function be specified"
         assert utility is not None, "Error: Feasibility Best Response requires a valid utility function be specified"
         self._cost = cost
         self._utility = utility
+
+        self._strategic_columns = strategic_columns
 
         self.max_iterations = max_iterations
         self.lr=lr
@@ -47,6 +49,9 @@ class LagrangianBestResponse(BaseBestResponse):
 
     def __call__(self, X:torch.Tensor, model:BaseModel, debug=False, animate_rate=None, y=None) ->torch.Tensor:
         Z = X.detach().clone().requires_grad_()
+
+        strat_mask = torch.zeros_like(Z, device=Z.device)
+        strat_mask[:, self._strategic_columns] = 1.0
 
         lagrange_mult = torch.tensor([0.0 for _ in range(len(X))], device=X.device).requires_grad_()
         lagrange_mult_cost = torch.tensor([0.0 for _ in range(len(X))], device=X.device).requires_grad_()
@@ -85,6 +90,11 @@ class LagrangianBestResponse(BaseBestResponse):
             l = util.mean()
             
             l.backward(inputs=[Z, lagrange_mult, lagrange_mult_cost])
+
+            # Only optimise the strategic features
+            with torch.no_grad():
+                if Z.grad is not None:
+                    Z.grad *= strat_mask
 
             opt_z.step()
             opt_lagrange.step()

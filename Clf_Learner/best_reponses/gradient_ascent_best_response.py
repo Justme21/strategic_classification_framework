@@ -6,10 +6,12 @@ ZERO_THRESHOLD = 1e-7
 
 class GradientAscentBestResponse(BaseBestResponse):
     """Use Stochastic Gradient Descent on the Agent objective to determine the best response z, for a given x, and a given function"""
-    def __init__(self, utility:BaseUtility, cost:BaseCost, lr=1e-2, max_iterations=100, **kwargs):
+    def __init__(self, utility:BaseUtility, cost:BaseCost, strategic_columns=None, lr=1e-2, max_iterations=100, **kwargs):
         #BaseBestResponse.__init__(self, utility, cost)
         self._cost = cost
         self._utility = utility
+
+        self._strategic_columns = strategic_columns
 
         self._cost = cost
         self._utility = utility
@@ -25,6 +27,9 @@ class GradientAscentBestResponse(BaseBestResponse):
         Z = X.detach().clone().requires_grad_()
         opt = self.opt([Z], self.lr)
 
+        strat_mask = torch.zeros_like(Z, device=Z.device)
+        strat_mask[:, self._strategic_columns] = 1.0
+
         if animate_rate is not None:
             assert isinstance(animate_rate, int)
             Z_store = X.detach().clone().unsqueeze(0)
@@ -37,6 +42,11 @@ class GradientAscentBestResponse(BaseBestResponse):
             l = -obj.mean()
 
             l.backward(inputs=[Z])
+
+            # Only optimise the strategic features
+            with torch.no_grad():
+                if Z.grad is not None:
+                    Z.grad *= strat_mask
 
             # NOTE: Doesn't entirely resolve instability in results
             # Decaying the learning rate to make the later iteration rounds less noisy
