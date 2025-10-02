@@ -11,10 +11,10 @@ MODEL_DICT: dict[str, type[BaseModel]] = {
     "iterated_randomised": IteratedRandomisedModel,
     "linear": LinearModel,
     "mlp": MLPModel,
-    "randomised": RandomisedModel,
     "parabolic": ParabolicModel,
     "quadratic": QuadraticModel,
     "icnn": ICNNModel,
+    "randomised": RandomisedModel,
 }
 
 

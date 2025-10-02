@@ -1,7 +1,7 @@
 from torch import Tensor
 from torch.utils.data import Dataset
 
-from .dataset_tools import get_standardiser
+from .tools.dataset_tools import get_standardiser
 
 from ..interfaces import BaseDataset
 
@@ -45,3 +45,6 @@ class TensorDataset(BaseDataset, Dataset):
             return self._standardiser.inverse_transform(X)
         else:
             return X
+
+    def get_standardiser(self):
+        return self._standardiser

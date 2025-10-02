@@ -44,20 +44,18 @@ class CSVDataset(TensorDataset):
         target_col = _format_target_col(target_col, data_df.shape[1])
 
         _check_cols(data_df, target_col, strat_cols)
-
-        if strat_cols is None:
-            if isinstance(target_col, str):
-                strat_cols = [x for x in data_df.columns if x!=target_col]
-            else:
-                strat_cols = [x for x in range(data_df.shape[1]) if x!=target_col]
         
-        X_df = _get_columns(data_df, strat_cols)
+        non_target_cols = [x for x in data_df.columns if x!=target_col] 
+        
+        X_df = _get_columns(data_df, non_target_cols)
         y_df = _get_columns(data_df, [target_col])
         
         # Don't want these tensors to be on GPU if that is default device. 
         # Put onto device in training loop instead
         X = torch.tensor(X_df.values, dtype=torch.float32, device="cpu")
         y = torch.tensor(y_df.values, dtype=torch.float32, device="cpu").squeeze()
+
+        self._strat_cols = strat_cols # The columns that have been identified as manipulable
 
         super().__init__(X=X, y=y, filename=csv_file)
 
@@ -72,3 +70,6 @@ class CSVDataset(TensorDataset):
 
     def get_all_vals(self):
         return super().get_all_vals()
+
+    def get_strategic_columns(self):
+        return self._strat_cols
