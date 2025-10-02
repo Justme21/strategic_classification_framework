@@ -33,8 +33,6 @@ class LinearBestResponse(BaseBestResponse):
             scale = scaled_W_norm/W_norm
         
         # Constraints applied to best responses
-        import pdb
-        pdb.set_trace()
         cond1 = -self.radius*scale <= distances # Must be within radius of decision boundary
         cond2 = distances < 0 # Must be beneath decision boundary
         cond = cond1*cond2

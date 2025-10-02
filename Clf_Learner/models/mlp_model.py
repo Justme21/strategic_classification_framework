@@ -67,7 +67,7 @@ class MLPModel(BaseModel, nn.Module):
             zz = self(grid_t).cpu().numpy().reshape(xx.shape)
 
         # find 0-level contour
-        cs = plt.contour(xx, yy, zz, levels=[0])
+        cs = plt.contour(xx, yy, zz, levels=[0], colors='none')
         bcs = []
         allsegs = getattr(cs, "allsegs", None)
         if allsegs and len(allsegs) > 0 and len(allsegs[0]) > 0:
