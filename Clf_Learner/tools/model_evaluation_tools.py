@@ -50,7 +50,11 @@ def _evaluate_accuracy(model, X, y):
     clean_confusion = _get_confusion_matrix(y, pred_X)
     strat_confusion = _get_confusion_matrix(y, pred_strat_X)
 
-    return {"clean_accuracy": clean_accuracy,"strategic_accuracy": strategic_accuracy, "clean_confusion": clean_confusion, "strategic_confusion": strat_confusion}
+    positive_gaming = strat_confusion["TP"] - clean_confusion["TP"] # Number of positive points that managed to correct classifier error
+    negative_gaming = strat_confusion["FP"] - clean_confusion["FP"] # Number of successful gaming attempts
+
+    return {"clean_accuracy": clean_accuracy,"strategic_accuracy": strategic_accuracy, "clean_confusion": clean_confusion, "strategic_confusion": strat_confusion,\
+            "positive_gaming": positive_gaming, "negative_gaming": negative_gaming}
 
 def evaluate_model(model:BaseModel, dataset:BaseDataset):
     results = {}

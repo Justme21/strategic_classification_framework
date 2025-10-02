@@ -83,6 +83,8 @@ if __name__ == "__main__":
         device = find_device()
         torch.set_default_device(device)
         set_device(device)
+        if device=="cuda":
+            torch.set_float32_matmul_precision('high')
 
     run_experiments(data_files=args.datasets, model_spec_names=args.specs, best_response_name=args.best_response, cost_name=args.cost, loss_name=args.loss,\
                      model_name=args.model, utility_name=args.utility, comp_args=args.args, seed_val=args.seed, lr=args.lr, batch_size=args.batch, epochs=args.epochs,\

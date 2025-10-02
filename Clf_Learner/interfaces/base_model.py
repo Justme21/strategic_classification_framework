@@ -67,7 +67,10 @@ class BaseModel(ABC):
         assert isinstance(self, torch.nn.Module), "Error: For non torch-based models save_params and load_params functions have to be implemented"
         if address is None:
             address = self.address
-        self.load_state_dict(torch.load(f"{address}/model_params", weights_only=True))
+        #self.load_state_dict(torch.load(f"{address}/model_params", weights_only=True))
+        # For loading weights from model trained on Cuda device
+        self.load_state_dict(torch.load(f"{address}/model_params", weights_only=True, map_location=torch.device('cpu')))
+        
 
     def to(self, device:str) -> None:
         for w in self.get_weights():

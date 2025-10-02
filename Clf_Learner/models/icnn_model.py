@@ -4,42 +4,46 @@ import torch.nn as nn
 from ..interfaces import BaseModel, BaseBestResponse, BaseDataset, BaseLoss
 from .tools.model_training_tools import vanilla_training_loop
 
-class MLPModel(BaseModel, nn.Module):
-    """Multi-Layer Perceptron"""
-    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, address:str, x_dim:int, hidden_layers:int=1,\
-                  hidden_dim:int=2, activation:str='relu', dropout:float=0.0, is_primary:bool=True, **kwargs):
+# Import ICNN variants from your ICNN script
+from .tools.icnn_tools import ICNN, ICNN2, ICNN3, LseICNN
+
+
+class ICNNModel(BaseModel, nn.Module):
+    """Input Convex Neural Network (ICNN) wrapper with same API as MLPModel."""
+
+    def __init__(self, best_response:BaseBestResponse, loss:BaseLoss, address:str, x_dim:int,
+                 hidden_layers:int=1, hidden_dim:int=16, icnn_type:str='ICNN',
+                 symm_act_first:bool=False, softplus_type:str='softplus', zero_softplus:bool=False,
+                 is_primary:bool=True, **kwargs):
         BaseModel.__init__(self, best_response, loss, address, x_dim, is_primary)
         nn.Module.__init__(self)
 
         self.x_dim = x_dim
         self.hidden_layers = hidden_layers
         self.hidden_dim = hidden_dim
-        self.dropout = dropout
+        self.icnn_type = icnn_type
 
-        # Choose activation
-        activations = {
-            "relu": nn.ReLU,
-            "tanh": nn.Tanh,
-            "sigmoid": nn.Sigmoid,
-        }
-        assert activation in activations, f"Unknown activation '{activation}'"
-        self.activation_fn = activations[activation]()
-
-        # Build sequential network
-        layers = []
-        in_dim = x_dim
-
-        for _ in range(hidden_layers):
-            layers.append(nn.Linear(in_dim, hidden_dim))
-            layers.append(self.activation_fn)
-            if dropout > 0:
-                layers.append(nn.Dropout(dropout))
-            in_dim = hidden_dim
-
-        # Final output layer (scalar score for classification boundary)
-        layers.append(nn.Linear(in_dim, 1))
-
-        self.network = nn.Sequential(*layers)
+        # Choose which ICNN variant to use
+        if icnn_type == 'ICNN':
+            self.network = ICNN(dim=x_dim, dimh=hidden_dim, num_hidden_layers=hidden_layers)
+        elif icnn_type == 'ICNN2':
+            self.network = ICNN2(
+                dim=x_dim, dimh=hidden_dim, num_hidden_layers=hidden_layers,
+                symm_act_first=symm_act_first,
+                softplus_type=softplus_type,
+                zero_softplus=zero_softplus
+            )
+        elif icnn_type == 'ICNN3':
+            self.network = ICNN3(
+                dim=x_dim, dimh=hidden_dim, num_hidden_layers=hidden_layers,
+                symm_act_first=symm_act_first,
+                softplus_type=softplus_type,
+                zero_softplus=zero_softplus
+            )
+        elif icnn_type == 'LseICNN':
+            self.network = LseICNN(dim=x_dim, dimh=hidden_dim)
+        else:
+            raise ValueError(f"Unknown icnn_type '{icnn_type}'. Supported: ICNN, ICNN2, ICNN3, LseICNN")
 
         self.best_response = best_response
         self.loss = loss
@@ -91,9 +95,8 @@ class MLPModel(BaseModel, nn.Module):
     def set_weights(self, weight_tensor: torch.Tensor) -> None:
         """Set weights for non-primary models."""
         assert not self.is_primary(), "Error: Can only set weights for non-primary models"
-        # NOTE: you'd need to reshape and load weights into the state_dict if you want this fully working.
-        raise NotImplementedError("Setting weights not yet implemented for MLPModel.")
-    
+        raise NotImplementedError("Setting weights not yet implemented for ICNNModel.")
+
     def forward(self, X):
         """Forward pass (returns raw scores)."""
         return self.network(X).squeeze(-1)
@@ -103,6 +106,7 @@ class MLPModel(BaseModel, nn.Module):
         y_hat[torch.abs(y_hat) <= 1e-10] = 0
         return torch.sign(y_hat)
 
-    def fit(self, train_dset:BaseDataset, opt, lr:float, batch_size:int, epochs:int, validate:bool, verbose:bool=False):
+    def fit(self, train_dset:BaseDataset, opt, lr:float, batch_size:int, epochs:int,
+            validate:bool, verbose:bool=False):
         train_losses_dict = vanilla_training_loop(self, train_dset, opt, lr, batch_size, epochs, validate, verbose)
         return train_losses_dict

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from ..interfaces import BaseBestResponse, BaseDataset, BaseLoss, BaseModel
-from .model_training_tools import vanilla_training_loop
+from .tools.model_training_tools import vanilla_training_loop
 
 class QuadraticModel(BaseModel, nn.Module):
     """

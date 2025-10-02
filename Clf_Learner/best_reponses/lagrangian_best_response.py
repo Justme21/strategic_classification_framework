@@ -63,39 +63,19 @@ class LagrangianBestResponse(BaseBestResponse):
         cost_old_val = None
         util_old_val = None
 
-        #device = get_device()
-        #if device == 'mps':
+        device = get_device()
+        if device=="cuda":
+            # Compilation is optimised for speedup on CUDA
+            obj_comp = torch.compile(self._objective_impl)
+        #elif device == 'mps':
         #    # torch.compile not supported on MPS
         #    obj_comp = torch.compile(self._objective_impl, backend='aot_eager')
-        #else:
-        #    obj_comp = torch.compile(self._objective_impl)
-
-        obj_comp = self._objective_impl
+        else:
+            obj_comp = self._objective_impl
 
         for t in range(self.max_iterations):
-            # opt_z.zero_grad()
-
             # #for g in opt_z.param_groups:
             # #    g['lr'] = self.lr / (1 + 0.1*t)
-
-            # #util = self.objective(Z, X, model, lagrange_mult)
-            # #util = self.objective(Z, X, model, lagrange_mult, lagrange_mult_cost)
-            
-
-            # l_z = util.mean()
-            # l_z.backward(inputs=[Z], retain_graph=True)
-            # #torch.nn.utils.clip_grad_norm_([Z], max_norm=10.0) # Adam can cause gradient weirdness
-            # opt_z.step()
-
-            # opt_lagrange.zero_grad()
-            # opt_lagrange_cost.zero_grad()
-
-            # #l.backward(inputs=[Z, lagrange_mult])
-            # util = self.objective(Z, X, model, lagrange_mult, lagrange_mult_cost)
-            # l_lagrange = -util.mean()
-            # l_lagrange.backward(inputs=[lagrange_mult, lagrange_mult_cost], retain_graph=True)
-            # opt_lagrange.step()
-            # opt_lagrange_cost.step()
 
             opt_z.zero_grad()
             opt_lagrange.zero_grad()
@@ -106,8 +86,6 @@ class LagrangianBestResponse(BaseBestResponse):
             
             l.backward(inputs=[Z, lagrange_mult, lagrange_mult_cost])
 
-            #lagrange_mult.grad = -lagrange_mult.grad
-            #lagrange_mult_cost.grad = -lagrange_mult_cost.grad
             opt_z.step()
             opt_lagrange.step()
             opt_lagrange_cost.step()
