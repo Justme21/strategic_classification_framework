@@ -47,8 +47,11 @@ class CSVDataset(TensorDataset):
         
         # Numbered columns
         data_columns = data_df.columns.to_list()
-        non_target_cols = [i for i, x in enumerate(data_columns) if x!=target_col] 
-        
+        if isinstance(target_col, str):
+            non_target_cols = [i for i, x in enumerate(data_columns) if x!=target_col] 
+        else:
+            non_target_cols = [i for i, _ in enumerate(data_columns) if i!=target_col] 
+ 
         X_df = _get_columns(data_df, non_target_cols)
         y_df = _get_columns(data_df, [target_col])
         
@@ -56,6 +59,11 @@ class CSVDataset(TensorDataset):
         # Put onto device in training loop instead
         X = torch.tensor(X_df.values, dtype=torch.float32, device="cpu")
         y = torch.tensor(y_df.values, dtype=torch.float32, device="cpu").squeeze()
+
+        # TODO: Fix this hack later
+        # Handling 0-1 binary data and map to -1, 1
+        if y.min()==0 and y.max()==1:
+            y = torch.where(y==0, -1, 1)
 
         self._strat_cols = None
         if strat_cols:

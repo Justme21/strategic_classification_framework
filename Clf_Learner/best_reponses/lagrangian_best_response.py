@@ -178,6 +178,4 @@ class LagrangianBestResponse(BaseBestResponse):
                 X_opt = torch.where(cond, Z, X)
                 #X_opt = Z
 
-        import pdb
-        pdb.set_trace()
         return X_opt
