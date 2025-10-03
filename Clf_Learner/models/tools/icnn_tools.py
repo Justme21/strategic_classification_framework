@@ -9,6 +9,7 @@ from lib.flows.flows import ActNormNoLogdet
 from lib.functional import log_sum_exp
 import pdb
 
+
 def symm_softplus(x, softplus_=torch.nn.functional.softplus):
     return softplus_(x) - 0.5 * x
 
