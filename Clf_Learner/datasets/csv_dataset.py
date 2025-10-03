@@ -64,8 +64,6 @@ class CSVDataset(TensorDataset):
         # Handling 0-1 binary data and map to -1, 1
         if y.min()==0 and y.max()==1:
             y = torch.where(y==0, -1, 1)
-        import pdb
-        pdb.set_trace()
 
         self._strat_cols = None
         if strat_cols:
