@@ -60,6 +60,11 @@ class CSVDataset(TensorDataset):
         X = torch.tensor(X_df.values, dtype=torch.float32, device="cpu")
         y = torch.tensor(y_df.values, dtype=torch.float32, device="cpu").squeeze()
 
+        # TODO: Fix this hack later
+        # Handling 0-1 binary data and map to -1, 1
+        if y.min()==0 and y.max()==1:
+            y = torch.where(y==0, -1, 1)
+
         self._strat_cols = None
         if strat_cols:
             if not isinstance(strat_cols[0], int):
