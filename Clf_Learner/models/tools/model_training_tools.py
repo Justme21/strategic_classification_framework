@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from ...interfaces import BaseModel, BaseDataset
 from ...tools.model_evaluation_tools import validate_model
 from ...tools.device_tools import get_device
-
+import pdb
 def vanilla_training_loop(model:BaseModel, train_dset:BaseDataset, opt, lr:float, batch_size:int, epochs:int, validate:bool, verbose:bool) -> dict[str, dict[str, list]]:
     """The base training loop that is common to most models"""
     # Put Data into a DataLoader
