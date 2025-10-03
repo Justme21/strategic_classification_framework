@@ -1,0 +1,32 @@
+{
+  "arg_file": null,
+  "dirname": "credit_exp_batch128_max_20/icnn",
+  "datasets": [
+    "credit_scoring_normalised_class_balanced.csv"
+  ],
+  "specs": null,
+  "best_response": "lagrange",
+  "cost": "quadratic",
+  "loss": "naive_ssvm_hinge",
+  "model": "icnn",
+  "utility": "strategic",
+  "implicit": true,
+  "lr": 0.01,
+  "batch": 128,
+  "epochs": 20,
+  "seed": 123,
+  "hist_result_dirname": null,
+  "train": true,
+  "validate": true,
+  "test": true,
+  "store": true,
+  "verbose": true,
+  "args": {
+    "max_iterations": 20000,
+    "lr": 0.0007,
+    "margin": 0.05,
+    "lagrange_mult_lr": 0.05,
+    "lagrange_mult_cost_lr": 0.01
+  },
+  "gpu": true
+}

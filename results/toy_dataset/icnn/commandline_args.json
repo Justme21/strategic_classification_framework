@@ -1,0 +1,32 @@
+{
+  "arg_file": null,
+  "dirname": "toy_dataset/icnn",
+  "datasets": [
+    "ball_half_ring_dataset_ball_rad_2_in_rad_3_out_rad_5.csv"
+  ],
+  "specs": null,
+  "best_response": "lagrange",
+  "cost": "quadratic",
+  "loss": "naive_ssvm_hinge",
+  "model": "icnn",
+  "utility": "strategic",
+  "implicit": true,
+  "lr": 0.01,
+  "batch": 2048,
+  "epochs": 20,
+  "seed": 0,
+  "hist_result_dirname": null,
+  "train": true,
+  "validate": true,
+  "test": true,
+  "store": true,
+  "verbose": true,
+  "args": {
+    "max_iterations": 20000,
+    "lr": 0.0007,
+    "margin": 0.05,
+    "lagrange_mult_lr": 0.05,
+    "lagrange_mult_cost_lr": 0.01
+  },
+  "gpu": true
+}
